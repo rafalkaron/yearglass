@@ -4,6 +4,7 @@ import utime  # type: ignore
 from yearglass.buttons import Buttons
 from yearglass.epaper import EPaper
 from yearglass.led import Led
+from yearglass.gnss import Gnss
 from yearglass.time_handler import TimeHandler
 from yearglass.time_visualizer import TimeVisualizer
 
@@ -34,6 +35,7 @@ class YearGlass:
             on_key2=self.display_random_mode,
             on_key3=self.display_previous_mode,
         )
+        self.gnss = Gnss()
 
         # Handlers
         self.time_handler = TimeHandler()
