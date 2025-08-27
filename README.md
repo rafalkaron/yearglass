@@ -63,7 +63,7 @@ Yearglass is coded with power-efficiency in mind.
 
 ### Wiring
 
-| Pico W      Pin | Connects to                      | Description                              |
+| Pico W Pin      | Connects to                      | Description                              |
 |-----------------|----------------------------------|------------------------------------------|
 | VSYS            | VCC (Display, GNSS, RTC)         | Power input (3.3V/5V as required)        |
 | GND             | GND (Display, GNSS, RTC)         | Ground                                   |
@@ -80,3 +80,4 @@ Yearglass is coded with power-efficiency in mind.
 | GP5             | SCL (RTC)                        | I2C SCL for RTC PCF8563                  |
 | GP0             | TX (GNSS)                        | UART TX to GNSS module                   |
 | GP1             | RX (GNSS)                        | UART RX from GNSS module                 |
+| GP6             | WUP (GNSS)                       | GNSS Wake Up pin for sleep control       |
