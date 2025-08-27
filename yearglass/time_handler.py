@@ -112,6 +112,102 @@ class TimeHandler:
         print(f"[get_ntp_time] NTP time (local): {local_t}")
         return local_t[:8]
 
+    def get_gnss_time(
+        self, uart, local: bool = True, retries: int | None = 5, delay: int = 1
+    ) -> tuple:
+        """
+        Fetch current UTC time from a GNSS module via UART and convert to Polish local time (Europe/Warsaw),
+        including DST adjustment if local=True.
+        Retries GNSS fetch on failure.
+        If retries is None, retry indefinitely until successful.
+        Returns (year, month, mday, hour, minute, second, weekday, yearday)
+        If local=False, returns UTC time tuple.
+        :param uart: UART object connected to GNSS module
+        :param retries: Number of retry attempts for GNSS fetch. If None, retry indefinitely.
+        :param delay: Delay between retries (seconds)
+        """
+        attempt = 0
+        while True:
+            try:
+                attempt += 1
+                # Flush input buffer
+                while uart.any():
+                    uart.read()
+                # Wait for a valid GPRMC sentence
+                timeout = 5
+                t0 = time.time()
+                gnss_time = None
+                while time.time() - t0 < timeout:
+                    line = uart.readline()
+                    if not line:
+                        continue
+                    try:
+                        line = line.decode()
+                    except Exception:
+                        continue
+                    if line.startswith("$GPRMC"):
+                        # Example: $GPRMC,hhmmss.sss,A,lat,N,lon,E,speed,track,date,magvar,E*cs\r\n
+                        # Extract time and date
+                        fields = line.strip().split(",")
+                        if len(fields) < 10:
+                            continue
+                        if fields[2] != "A":
+                            continue  # Data invalid
+                        time_str = fields[1]
+                        date_str = fields[9]
+                        if not time_str or not date_str:
+                            continue
+                        # Parse time
+                        hour = int(time_str[0:2])
+                        minute = int(time_str[2:4])
+                        second = int(time_str[4:6])
+                        # Parse date
+                        day = int(date_str[0:2])
+                        month = int(date_str[2:4])
+                        year = 2000 + int(date_str[4:6])
+                        # Compose UTC time tuple
+                        t = (year, month, day, hour, minute, second, 0, 0)
+                        gnss_time = t
+                        break
+                if gnss_time is None:
+                    raise Exception("No valid GPRMC sentence received from GNSS")
+                break
+            except Exception as e:
+                if retries is not None:
+                    print(
+                        f"[get_gnss_time] Error fetching time from GNSS: {e} (attempt {attempt}/{retries})"
+                    )
+                else:
+                    print(
+                        f"[get_gnss_time] Error fetching time from GNSS: {e} (attempt {attempt})"
+                    )
+                if retries is not None and attempt >= retries:
+                    print("GNSS fetch failed after retries.")
+                    break
+                print(f"Retrying GNSS fetch in {delay} seconds...")
+                time.sleep(delay)
+        if gnss_time is None:
+            # Fallback: return internal time
+            print("[get_gnss_time] Returning internal time as fallback.")
+            t = time.localtime()
+        else:
+            t = gnss_time
+        # Calculate weekday and yearday
+        ts = time.mktime(t)
+        t_full = time.localtime(ts)
+        if not local:
+            print(f"[get_gnss_time] GNSS time (UTC): {t_full}")
+            return t_full[:8]
+        # t is in UTC
+        if self._is_dst_poland(t_full):
+            offset = 2  # CEST
+        else:
+            offset = 1  # CET
+        ts_local = ts + offset * 3600
+        local_t = time.localtime(ts_local)
+        print(f"[get_gnss_time] GNSS time (local): {local_t}")
+        return local_t[:8]
+
     def _is_dst_poland(self, t: tuple) -> bool:
         """
         Determine if DST is in effect in Poland for the given UTC time tuple.
