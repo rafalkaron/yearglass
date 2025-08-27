@@ -1,20 +1,30 @@
 # Yearglass
 
-Display year progress in unusual ways on epaper display.
+Display year progress in unusual ways on an epaper display.
 
 ## Using Yearglass
 
 Turn Yearglass on and switch between different modes of year progress visualization.
 
 1. Turn Yearglass on.  
-**Result:** Yearglass initializes and the internal LED flashes. Once completed, the internal LED turns off.
-1. To change the display mode, do any of the following:
+    **Result:** Yearglass initializes and the internal LED flashes. Once completed, the internal LED turns off and the default mode displays.
+2. To change the display mode, use the buttons as follows:
 
-    | Button            | Action                          |
-    |-------------------|---------------------------------|
-    | Right button      | Display next visualization      |
-    | Middle button     | Display random visualization    |
-    | Left button       | Display previous visualization  |
+    | Button        | Action                        |
+    |---------------|-------------------------------|
+    | Right button  | Display next visualization    |
+    | Left button   | Display previous visualization|
+    | Middle button | Display random visualization  |
+
+### Display Modes
+
+Yearglass includes the following visualization modes:
+
+* **Hourglass:** Displays year progress in the shape of an hourglass.
+* **Level:** Displays year progress as a vertical level bar.
+* **Pie Chart:** Displays year progress as a rectangular pie chart.
+* **Spiral:** Displays year progress as a snake-like visualization.
+* **Crossout:** Displays remaining days as `.` and elapsed days as `x`.
 
 ## Development
 
