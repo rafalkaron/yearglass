@@ -24,16 +24,16 @@ Build your own Yearglass!
 
 Yearglass uses low-power components to ensure long operation on a single charge.
 
-| Component         | Quantity | Description                                                            |
-|-------------------|----------|------------------------------------------------------------------------|
-| Controller        | 1        | Raspberry Pi Pico W(H)                                                 |
-| Display           | 1        | Waveshare Pico-ePaper-2.7 (264x176 Pixels)                             |
-| GNSS module       | 1        | Seeed Xiao - L76K - GPS, BeiDou, GLONASS, QZSS - Seeedstudio 109100021 |
-| RTC module        | 1        | RTC PCF8563 I2C - Waveshare 3707                                       |
-| Battery           | 3        | AA NiMH rechargeable batteries (1.2V each)                             |
-| Battery pack      | 1        | For 3 AA batteries                                                     |
-| Wires             | several  | For connecting components                                              |
-| Chassis           | 1        | Components for keeping Yearglass together                              |
+| Component         | Quantity | Description                                                                    |
+|-------------------|----------|--------------------------------------------------------------------------------|
+| Controller        | 1        | Raspberry Pi Pico W(H)                                                         |
+| Display           | 1        | Waveshare Pico-ePaper-2.7 (264x176 Pixels)                                     |
+| GNSS module       | 1        | Seeed Xiao - L76K - GPS, BeiDou, GLONASS, QZSS - Seeedstudio 109100021         |
+| RTC module        | 1        | RTC PCF8563 I2C - Waveshare 3707                                               |
+| Battery           | 3        | AA NiMH rechargeable batteries (1.2V each, connected in series for 3.6V total) |
+| Battery pack      | 1        | For 3 AA batteries                                                             |
+| Wires             | several  | For connecting components                                                      |
+| Chassis           | 1        | Components for keeping Yearglass together                                      |
 
 ### Software
 
