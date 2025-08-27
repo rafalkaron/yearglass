@@ -5,6 +5,7 @@ from yearglass.buttons import Buttons
 from yearglass.epaper import EPaper
 from yearglass.led import Led
 from yearglass.gnss import Gnss
+from yearglass.rtc import Rtc
 from yearglass.time_handler import TimeHandler
 from yearglass.time_visualizer import TimeVisualizer
 
@@ -16,10 +17,11 @@ except ImportError:
     WIFI_SSID = None
 
 
-class YearGlass:
+class Yearglass:
     def __init__(self) -> None:
         # Startup delay for power stability
         utime.sleep(2)
+
         # Hardware
         if WIFI_SSID is not None and WIFI_PASSWORD is not None:
             self.sta = Station(WIFI_SSID, WIFI_PASSWORD)
@@ -36,6 +38,7 @@ class YearGlass:
             on_key3=self.display_previous_mode,
         )
         self.gnss = Gnss()
+        self.rtc = Rtc()
 
         # Handlers
         self.time_handler = TimeHandler()
@@ -133,20 +136,20 @@ class YearGlass:
 
 def main():
     try:
-        yg: YearGlass = YearGlass()
-        yg.update_data()
-        yg.display_refresh_current_mode()
-        yg.buttons.enable_interrupts()
+        yearglass: Yearglass = Yearglass()
+        yearglass.update_data()
+        yearglass.display_refresh_current_mode()
+        yearglass.buttons.enable_interrupts()
 
         while True:
-            seconds_till_midnight: int = yg.time_handler.get_seconds_till_midnight()
+            seconds_till_midnight: int = yearglass.time_handler.get_seconds_till_midnight()
             utime.sleep(seconds_till_midnight)
-            yg.update_data()
-            yg.display_refresh_current_mode()
+            yearglass.update_data()
+            yearglass.display_refresh_current_mode()
 
     except Exception as e:
         try:
-            yg.led.on()
+            yearglass.led.on()
         except Exception:
             pass
         print(f"[main] Error: {e}")
