@@ -3,7 +3,7 @@ Third-Party Notice: Pico_ePaper-2.7.py (Waveshare)
 This project includes the following third-party component:
 
 -------------------------------------------------------------------------------
-File: inky/Pico-ePaper-2.7.py
+File: libs/Pico-ePaper-2.7.py
 Author: Waveshare team
 
 Source: https://www.waveshare.com/
