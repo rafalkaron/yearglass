@@ -1,5 +1,6 @@
 import urandom  # type: ignore
 import utime  # type: ignore
+from machine import WDT  # type: ignore
 
 from yearglass.buttons import Buttons
 from yearglass.epaper import EPaper
@@ -184,13 +185,15 @@ class Yearglass:
 
 
 def main():
+    # Watchdog: set timeout to 25 hours (in ms)
+    wdt = WDT(timeout=25 * 60 * 60 * 1000)
     try:
         yearglass: Yearglass = Yearglass()
         while True:
             yearglass.update_data()
             yearglass.display_refresh_current_mode()
             utime.sleep(yearglass.time_handler.get_seconds_till_midnight())
-
+            wdt.feed()  # Feed the watchdog after each successful daily refresh
     except Exception as e:
         try:
             yearglass.led.blink_on(0.5)
