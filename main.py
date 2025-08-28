@@ -41,7 +41,7 @@ class Yearglass:
         self.rtc = Rtc()
 
         # Handlers
-        self.time_handler = TimeHandler()
+        self.time_handler = TimeHandler(gnss=self.gnss, station=self.sta, rtc=self.rtc)
         self.time_visualizer = TimeVisualizer(
             max_cols=self.epd.max_columns,
             max_rows=self.epd.max_rows,
@@ -57,6 +57,7 @@ class Yearglass:
             "spiral",
             "piechart",
         ]
+        self.seconds_till_midnight: int = 1
         self.current_display_mode: str = "crossout"
 
     def display_mode(self, mode: str) -> None:
@@ -120,16 +121,8 @@ class Yearglass:
     def update_data(self):
         self.buttons.disable_interrupts()
         self.led.on()
-        if self.sta is not None:
-            if self.sta.connect():
-                t: tuple = self.time_handler.get_ntp_time()
-            else:
-                t = self.time_handler.get_internal_time()
-        print(f"[update_data] timestamp: {self.time_visualizer.render_time_str(t)}")
         self.days_elapsed, self.days_total = self.time_handler.get_year_progress()
-        if self.sta is not None:
-            self.sta.disconnect()
-            self.sta.sleep()
+        self.seconds_till_midnight: int = self.time_handler.get_seconds_till_midnight()
         self.led.off()
         self.buttons.enable_interrupts()
 
@@ -137,15 +130,10 @@ class Yearglass:
 def main():
     try:
         yearglass: Yearglass = Yearglass()
-        yearglass.update_data()
-        yearglass.display_refresh_current_mode()
-        yearglass.buttons.enable_interrupts()
-
         while True:
-            seconds_till_midnight: int = yearglass.time_handler.get_seconds_till_midnight()
-            utime.sleep(seconds_till_midnight)
             yearglass.update_data()
             yearglass.display_refresh_current_mode()
+            utime.sleep(yearglass.seconds_till_midnight)
 
     except Exception as e:
         try:

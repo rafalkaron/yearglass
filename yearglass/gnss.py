@@ -27,15 +27,12 @@ class Gnss:
         wup: int = 6
     ):
         self.uart = UART(uart_id, baudrate=baudrate, tx=tx, rx=rx)
-        self.sleep = Pin(wup, Pin.OUT) if wup is not None else None
-
+        self.wup = Pin(wup, Pin.OUT)
 
     def sleep(self) -> None:
         """Put GNSS module to sleep (if sleep pin is available)."""
-        if self.sleep is not None:
-            self.sleep.value(1)
+        self.wup.value(1)
 
     def wake(self) -> None:
         """Wake GNSS module from sleep (if sleep pin is available)."""
-        if self.sleep is not None:
-            self.sleep.value(0)
+        self.wup.value(0)
