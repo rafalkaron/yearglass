@@ -16,7 +16,7 @@ Turn Yearglass on and switch between different modes of year progress visualizat
     | Left button   | Display previous visualization|
     | Middle button | Display random visualization  |
 
-### Display modes
+### Display modes reference
 
 Yearglass includes the following visualization modes:
 
@@ -28,7 +28,7 @@ Yearglass includes the following visualization modes:
 | Spiral     | Displays year progress as a snake-like visualization    |
 | Crossout   | Displays remaining days as `.` and elapsed days as `x`  |
 
-### Indicators
+### Status reference
 
 Yearglass internal LED indicates the following:
 
@@ -41,24 +41,11 @@ Yearglass internal LED indicates the following:
 | Blinking every 2s         | Problem with displaying data                  |
 | Blinking every 3s         | Problem with optional hardware initialization |
 
+**NOTE:** In case of hangs, freezes, or infinite loops, Yearglass automatically resets after 25 hours.
+
 ## Development
 
 Build your own Yearglass!
-
-### Components
-
-Yearglass uses low-power components to ensure long operation on a single charge.
-
-| Component         | Quantity | Description                                                                    |
-|-------------------|----------|--------------------------------------------------------------------------------|
-| Controller        | 1        | Raspberry Pi Pico W(H)                                                         |
-| Display           | 1        | Waveshare Pico-ePaper-2.7 (264x176 Pixels)                                     |
-| GNSS module       | 1        | Seeed Xiao - L76K - GPS, BeiDou, GLONASS, QZSS - Seeedstudio 109100021         |
-| RTC module        | 1        | RTC PCF8563 I2C - Waveshare 3707                                               |
-| Battery           | 3        | AA NiMH rechargeable batteries (1.2V each, connected in series for 3.6V total) |
-| Battery pack      | 1        | For 3 AA batteries                                                             |
-| Wires             | several  | For connecting components                                                      |
-| Chassis           | 1        | Components for keeping Yearglass together                                      |
 
 ### Software
 
@@ -76,7 +63,22 @@ Yearglass is coded with power-efficiency in mind.
 
 3. Upload the necessary files from this repository to Raspberry Pi Pico W(H).
 
-### Wiring
+### Components reference
+
+Yearglass uses low-power components to ensure long operation on a single charge.
+
+| Component         | Quantity | Description                                                                    |
+|-------------------|----------|--------------------------------------------------------------------------------|
+| Controller        | 1        | Raspberry Pi Pico W(H)                                                         |
+| Display           | 1        | Waveshare Pico-ePaper-2.7 (264x176 Pixels)                                     |
+| GNSS module       | 1        | Seeed Xiao - L76K - GPS, BeiDou, GLONASS, QZSS - Seeedstudio 109100021         |
+| RTC module        | 1        | RTC PCF8563 I2C - Waveshare 3707                                               |
+| Battery           | 3        | AA NiMH rechargeable batteries (1.2V each, connected in series for 3.6V total) |
+| Battery pack      | 1        | For 3 AA batteries                                                             |
+| Wires             | several  | For connecting components                                                      |
+| Chassis           | 1        | Components for keeping Yearglass together                                      |
+
+### Wiring reference
 
 | Pico W Pin      | Connects to                      | Description                              |
 |-----------------|----------------------------------|------------------------------------------|
