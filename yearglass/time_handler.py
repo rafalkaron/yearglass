@@ -102,7 +102,9 @@ class TimeHandler:
 
         # 1. Try GNSS
         if self.gnss is not None:
+            self.gnss.wake()
             t = self.get_gnss_time(local=local, retries=retries, delay=delay)
+            self.gnss.sleep()
             if t is not None:
                 self._update_rtc_time(t)
                 self._update_pico_time(t)
