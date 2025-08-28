@@ -32,6 +32,11 @@ class TestTimeHandler:
         assert isinstance(seconds, int)
         assert 0 <= seconds <= 86400
 
+    def test_gnss_time(self):
+        t = self.time_handler.get_gnss_time()
+        print(f"get_gnss_time: {t}")
+        assert t is None or (isinstance(t, tuple) and len(t) == 8)
+
     def test_get_ntp_time(self):
         t = self.time_handler.get_ntp_time()
         print(f"get_ntp_time: {t}")
@@ -81,6 +86,7 @@ class TestTimeHandler:
     def run_all(self):
         self.test_get_year_progress()
         self.test_get_seconds_till_midnight()
+        self.test_gnss_time()
         self.test_get_ntp_time()
         self.test_get_rtc_time()
         self.test_get_pico_time()
