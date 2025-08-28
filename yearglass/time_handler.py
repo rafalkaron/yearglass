@@ -334,50 +334,90 @@ class TimeHandler:
             print(f"[get_pico_time] Exception: {e}")
             return None
 
-    def _is_dst_poland(self, t: tuple) -> bool:
+    def _is_dst_poland(self, t: tuple[int, int, int, int, int, int, int, int]) -> bool:
         """
         Determine if DST is in effect in Poland for the given UTC time tuple.
+        Expects a tuple matching time.localtime():
+            (year, month, mday, hour, minute, second, weekday, yearday)
         DST in Poland: from last Sunday in March to last Sunday in October.
+        Returns True if DST is in effect, False otherwise.
         """
-        year = t[0]
-        # Last Sunday in March
-        march_last_sunday = max(
-            week
-            for week in range(31, 24, -1)
-            if time.localtime(time.mktime((year, 3, week, 1, 0, 0, 0, 0)))[:3][1] == 3  # type: ignore
-        )
-        # Last Sunday in October
-        oct_last_sunday = max(
-            week
-            for week in range(31, 24, -1)
-            if time.localtime(time.mktime((year, 10, week, 1, 0, 0, 0, 0)))[:3][1] == 10  # type: ignore
-        )
-        # Unpack only the first 6 elements (year, month, day, hour, minute, second)
-        y, m, d, h, mi, s = t[:6]
+        if len(t) < 6:
+            print("[_is_dst_poland] Tuple too short for DST calculation.")
+            return False
+
+        year, month, day, hour, minute, second = t[:6]
+
+        def last_sunday(year: int, month: int) -> int:
+            """Return the day of the month for the last Sunday of the given month."""
+            for week in range(31, 24, -1):
+                try:
+                    tm = time.localtime(time.mktime((year, month, week, 1, 0, 0, 0, 0)))  # type: ignore
+                    if tm[1] == month and tm[6] == 6:  # Sunday
+                        return week
+                except Exception:
+                    continue
+            raise ValueError(f"No Sunday found in {year}-{month}")
+
+        try:
+            march_last_sunday = last_sunday(year, 3)
+            oct_last_sunday = last_sunday(year, 10)
+        except Exception as e:
+            print(f"[_is_dst_poland] Error finding last Sunday: {e}")
+            return False
+
         # DST starts at 2:00 UTC on last Sunday in March
-        dst_start = time.mktime((year, 3, march_last_sunday, 2, 0, 0, 0, 0))  # type: ignore
-        # DST ends at 1:00 UTC on last Sunday in October
-        dst_end = time.mktime((year, 10, oct_last_sunday, 1, 0, 0, 0, 0))  # type: ignore
-        now = time.mktime((y, m, d, h, mi, s, 0, 0))  # type: ignore
-        print(f"[get_dst_poland] DST in effect: {dst_start <= now < dst_end}")
-        return dst_start <= now < dst_end
+        try:
+            dst_start = time.mktime((year, 3, march_last_sunday, 2, 0, 0, 0, 0))  # type: ignore
+            dst_end = time.mktime((year, 10, oct_last_sunday, 1, 0, 0, 0, 0))  # type: ignore
+            now = time.mktime((year, month, day, hour, minute, second, 0, 0))  # type: ignore
+        except Exception as e:
+            print(f"[_is_dst_poland] Error in mktime: {e}")
+            return False
 
-    def _update_rtc_time(self, t: tuple) -> None:
-        """Try to update RTC with time tuple t."""
-        if self.rtc is not None:
-            try:
-                # t: (year, month, mday, hour, minute, second, weekday, yearday)
-                year, month, mday, hour, minute, second, weekday, _ = t
-                self.rtc.set_datetime(year, month, mday, weekday, hour, minute, second)
-                print("[TimeHandler] RTC updated.")
-            except Exception as e:
-                print(f"[TimeHandler] Failed to update RTC: {e}")
+        in_dst = dst_start <= now < dst_end
+        print(f"[_is_dst_poland] DST in effect: {in_dst}")
+        return in_dst
 
-    def _update_pico_time(self, t: tuple) -> None:
-        """Try to update Pico internal clock with time tuple t."""
+    def _update_rtc_time(
+        self, t: tuple[int, int, int, int, int, int, int, int]
+    ) -> None:
+        """
+        Update the external RTC with the provided time tuple.
+        Expects t to be (year, month, mday, hour, minute, second, weekday, yearday).
+        Logs success or failure. Validates tuple length and types.
+        """
+        if self.rtc is None:
+            print("[TimeHandler] RTC not available, skipping RTC update.")
+            return
+        if not (isinstance(t, tuple) and len(t) == 8):
+            print(f"[TimeHandler] Invalid time tuple for RTC update: {t}")
+            return
+        try:
+            year, month, mday, hour, minute, second, weekday, _ = t
+            self.rtc.set_datetime(year, month, mday, weekday, hour, minute, second)
+            print(
+                f"[TimeHandler] RTC updated to: {year:04d}-{month:02d}-{mday:02d} {hour:02d}:{minute:02d}:{second:02d}"
+            )
+        except Exception as e:
+            print(f"[TimeHandler] Failed to update RTC: {e}")
+
+    def _update_pico_time(
+        self, t: tuple[int, int, int, int, int, int, int, int]
+    ) -> None:
+        """
+        Update the Pico internal RTC with the provided time tuple.
+        Expects t to be (year, month, mday, hour, minute, second, weekday, yearday).
+        Logs success or failure. Validates tuple length and types.
+        """
+        if not (isinstance(t, tuple) and len(t) == 8):
+            print(f"[TimeHandler] Invalid time tuple for Pico update: {t}")
+            return
         try:
             year, month, mday, hour, minute, second, _, _ = t
             machine.RTC().datetime((year, month, mday, 0, hour, minute, second, 0))
-            print("[TimeHandler] Pico internal clock updated.")
+            print(
+                f"[TimeHandler] Pico internal clock updated to: {year:04d}-{month:02d}-{mday:02d} {hour:02d}:{minute:02d}:{second:02d}"
+            )
         except Exception as e:
             print(f"[TimeHandler] Failed to update Pico time: {e}")
