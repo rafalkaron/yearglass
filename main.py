@@ -121,14 +121,24 @@ class Yearglass:
         self.display_mode(mode)
 
     def update_data(self):
-        self.buttons.disable_interrupts()
-        self.led.on()
-        t: tuple = self.time_handler.get_time()
-        timestamp: str = self.time_visualizer.render_time_str(t)
-        print(f"[update_data] Updated data at: {timestamp}")
-        self.days_elapsed, self.days_total = self.time_handler.get_year_progress()
-        self.led.off()
-        self.buttons.enable_interrupts()
+        try:
+
+            def fetch_time():
+                t: tuple | None = self.time_handler.get_time()
+                if t is not None:
+                    timestamp: str = self.time_visualizer.render_time_str(t)
+                    print(f"[update_data] Updated data at: {timestamp}")
+                else:
+                    print("[update_data] Unable to fetch time.")
+
+            self.buttons.disable_interrupts()
+            self.led.on()
+            fetch_time()
+            self.days_elapsed, self.days_total = self.time_handler.get_year_progress()
+            self.led.off()
+            self.buttons.enable_interrupts()
+        except Exception as e:
+            print(f"[update_data] Failed to update data: {e}")
 
 
 def main():

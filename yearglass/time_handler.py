@@ -39,6 +39,17 @@ class TimeHandler:
         return (days_elapsed, total_days)
 
     def get_seconds_till_midnight(self) -> int:
+        """
+        Calculate the number of seconds remaining until midnight (local time),
+        with a buffer to ensure the refresh happens after midnight.
+
+        Tries to use RTC time first, then falls back to Pico internal time. If both fail,
+        returns a fallback value (60 seconds). Adds a 60-second buffer to compensate for
+        possible clock drift. Handles exceptions gracefully.
+
+        Returns:
+            int: Number of seconds until midnight (plus buffer), or fallback value on error.
+        """
         try:
             # Try RTC first, fallback to Pico internal time if None
             t = None
@@ -78,7 +89,7 @@ class TimeHandler:
 
     def get_time(
         self, local: bool = True, retries: int | None = 2, delay: int = 1
-    ) -> tuple:
+    ) -> tuple | None:
         """
         Try to get time in order: GNSS -> NTP (WiFi) -> RTC -> Pico internal.
         GNSS and NTP will update RTC if successful. If RTC update fails, update Pico time.
@@ -101,11 +112,11 @@ class TimeHandler:
         if self.station is not None:
             if self.station.connect():
                 t = self.get_ntp_time(local=local, retries=retries, delay=delay)
+                self.station.disconnect()
+                self.station.sleep()
                 if t is not None:
                     self._update_rtc_time(t)
                     self._update_pico_time(t)
-                    self.station.disconnect()
-                    self.station.sleep()
                     return t
 
         # 3. Try RTC
@@ -119,11 +130,13 @@ class TimeHandler:
                 print(f"[get_time] RTC failed: {e}")
 
         # 4. Fallback: Pico internal
-        print("[get_time] Using Pico internal time as fallback.")
-        t = self.get_pico_time(local=local)
-        if t is None:
-            raise Exception("Pico internal time unavailable")
-        return t
+        try:
+            t = self.get_pico_time(local=local)
+            if t is not None:
+                return t
+        except Exception as e:
+            print(f"[get_time] Unable to get time from Pico: {e}")
+            return None
 
     def get_gnss_time(
         self, local: bool = True, retries: int | None = 5, delay: int = 1
