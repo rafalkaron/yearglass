@@ -1,4 +1,4 @@
-from machine import I2C, Pin
+from machine import I2C, Pin  # type: ignore
 
 
 class Rtc:
