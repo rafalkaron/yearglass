@@ -273,28 +273,37 @@ class TimeHandler:
         print(f"[get_ntp_time] NTP time (local): {local_t}")
         return local_t[:8]
 
-    def get_rtc_time(self, rtc_tuple: tuple, local: bool = True) -> tuple | None:
+    def get_rtc_time(
+        self, rtc_tuple: tuple, local: bool = True
+    ) -> tuple[int, int, int, int, int, int, int, int] | None:
         """
         Convert RTC tuple (year, month, day, weekday, hour, minute, second)
-        to (year, month, mday, hour, minute, second, weekday, yearday)
-        and apply local offset if needed. Returns None if any error occurs.
+        to a tuple matching time.localtime():
+            (year, month, mday, hour, minute, second, weekday, yearday)
+        Applies local offset if needed. Returns None if any error occurs.
         """
         try:
             year, month, mday, weekday, hour, minute, second = rtc_tuple
-            # Compose time tuple for mktime
-            t = (year, month, mday, hour, minute, second, weekday, 0)
-            ts = time.mktime(t)
-            if local:
-                if self._is_dst_poland(time.localtime(ts)):
-                    offset = 2
-                else:
-                    offset = 1
-                ts += offset * 3600
-            local_t = time.localtime(ts)
-            return local_t[:8]
         except Exception as e:
-            print(f"[get_rtc_time] Exception: {e}")
+            print(f"[get_rtc_time] Invalid RTC tuple: {e}")
             return None
+
+        t = (year, month, mday, hour, minute, second, weekday, 0)
+        try:
+            ts = time.mktime(t)
+        except Exception as e:
+            print(f"[get_rtc_time] mktime failed: {e}")
+            return None
+
+        if not local:
+            print(f"[get_rtc_time] RTC time (UTC): {t}")
+            return time.localtime(ts)[:8]
+
+        offset = 2 if self._is_dst_poland(time.localtime(ts)) else 1
+        ts += offset * 3600
+        local_t = time.localtime(ts)
+        print(f"[get_rtc_time] RTC time (local): {local_t}")
+        return local_t[:8]
 
     def get_pico_time(self, local: bool = True) -> tuple | None:
         """
