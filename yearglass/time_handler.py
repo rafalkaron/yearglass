@@ -305,26 +305,30 @@ class TimeHandler:
         print(f"[get_rtc_time] RTC time (local): {local_t}")
         return local_t[:8]
 
-    def get_pico_time(self, local: bool = True) -> tuple | None:
+    def get_pico_time(
+        self, local: bool = True
+    ) -> tuple[int, int, int, int, int, int, int, int] | None:
         """
-        Return the current internal Pi time as a tuple (year, month, mday, hour, minute, second, weekday, yearday).
+        Return the current internal Pi time as a tuple matching time.localtime():
+            (year, month, mday, hour, minute, second, weekday, yearday)
         If local=True, convert to Polish local time (Europe/Warsaw) with DST adjustment.
-        If local=False, return UTC time tuple.
-        Returns None if any error occurs.
+        If local=False, return UTC time tuple. Returns None if any error occurs.
         """
         try:
             t = time.localtime()
-            if not local:
-                print(f"[get_internal_time] Internal time (UTC): {t}")
-                return t[:8]
-            # t is in UTC
-            if self._is_dst_poland(t):
-                offset = 2  # CEST
-            else:
-                offset = 1  # CET
+        except Exception as e:
+            print(f"[get_pico_time] time.localtime() failed: {e}")
+            return None
+
+        if not local:
+            print(f"[get_pico_time] Internal time (UTC): {t}")
+            return t[:8]
+
+        try:
+            offset = 2 if self._is_dst_poland(t) else 1
             ts = time.mktime(t) + offset * 3600
             local_t = time.localtime(ts)
-            print(f"[get_internal_time] Internal time (local): {local_t}")
+            print(f"[get_pico_time] Internal time (local): {local_t}")
             return local_t[:8]
         except Exception as e:
             print(f"[get_pico_time] Exception: {e}")
