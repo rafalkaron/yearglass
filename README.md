@@ -7,7 +7,7 @@ Display year progress in unusual ways on an epaper display.
 Turn Yearglass on and switch between different modes of year progress visualization.
 
 1. Turn Yearglass on.  
-    **Result:** Yearglass initializes and the internal LED flashes. Once completed, the internal LED turns off and the default mode displays.
+    **Result:** Yearglass initializes and the internal LED turns on. Once completed, the internal LED turns off and the default mode displays.
 2. To change the display mode, use the buttons as follows:
 
     | Button        | Action                        |
@@ -16,15 +16,29 @@ Turn Yearglass on and switch between different modes of year progress visualizat
     | Left button   | Display previous visualization|
     | Middle button | Display random visualization  |
 
-### Display Modes
+### Display modes
 
 Yearglass includes the following visualization modes:
 
-* **Hourglass:** Displays year progress in the shape of an hourglass.
-* **Level:** Displays year progress as a vertical level bar.
-* **Pie Chart:** Displays year progress as a rectangular pie chart.
-* **Spiral:** Displays year progress as a snake-like visualization.
-* **Crossout:** Displays remaining days as `.` and elapsed days as `x`.
+| Mode       | Description                                             |
+|------------|---------------------------------------------------------|
+| Hourglass  | Displays year progress in the shape of an hourglass     |
+| Level      | Displays year progress as a vertical level bar          |
+| Pie Chart  | Displays year progress as a rectangular pie chart       |
+| Spiral     | Displays year progress as a snake-like visualization    |
+| Crossout   | Displays remaining days as `.` and elapsed days as `x`  |
+
+### Indicators
+
+Yearglass internal LED indicates the following:
+
+| LED Status                | Description                          |
+|---------------------------|--------------------------------------|
+| Off                       | Idle or powered down                 |
+| On                        | Busy with getting or displaying data |
+| Blinking every 1s         | Problem with updating data           |
+| Blinking every 2s         | Problem with displaying data         |
+| Blinking every 0.5s       | Problem in the main loop             |
 
 ## Development
 

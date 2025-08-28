@@ -64,6 +64,7 @@ class Yearglass:
         try:
             # NOTE: display mode methods must be named render_<mode>
             print(f"[display_{mode}] Displaying {mode} progress...")
+            self.led.on()
             self.buttons.disable_interrupts()
             self.current_display_mode = mode
             method_name = f"render_{mode}"
@@ -77,12 +78,14 @@ class Yearglass:
             else:
                 print(f"[display_mode] Unknown mode: {mode}")
             self.buttons.enable_interrupts()
+            self.led.off()
         except Exception as e:
             self.led.blink_on(2)
             print(f"[display_mode] Could not change display mode: {e}")
 
     def display_next_mode(self):
         try:
+            self.led.on()
             idx = (
                 self.display_modes.index(self.current_display_mode)
                 if self.current_display_mode in self.display_modes
@@ -90,12 +93,14 @@ class Yearglass:
             )
             next_idx = (idx + 1) % len(self.display_modes)
             self.display_mode(self.display_modes[next_idx])
+            self.led.off()
         except Exception as e:
             self.led.blink_on(2)
             print(f"[display_next_mode] Could not display next mode: {e}")
 
     def display_previous_mode(self):
         try:
+            self.led.on()
             idx = (
                 self.display_modes.index(self.current_display_mode)
                 if self.current_display_mode in self.display_modes
@@ -103,12 +108,14 @@ class Yearglass:
             )
             prev_idx = (idx - 1) % len(self.display_modes)
             self.display_mode(self.display_modes[prev_idx])
+            self.led.off()
         except Exception as e:
             self.led.blink_on(2)
             print(f"[display_next_mode] Could not display previous mode: {e}")
 
     def display_random_mode(self):
         try:
+            self.led.on()
             if self.current_display_mode in self.display_modes:
                 current_idx = self.display_modes.index(self.current_display_mode)
                 n = len(self.display_modes)
@@ -122,12 +129,14 @@ class Yearglass:
                 available = list(range(len(self.display_modes)))
             rand_idx = available[urandom.getrandbits(8) % len(available)]
             self.display_mode(self.display_modes[rand_idx])
+            self.led.off()
         except Exception as e:
             self.led.blink_on(2)
             print(f"[display_random_mode] Could not display random mode: {e}")
 
     def display_refresh_current_mode(self):
         try:
+            self.led.on()
             if self.current_display_mode in self.display_modes:
                 mode = self.current_display_mode
             else:
@@ -136,13 +145,13 @@ class Yearglass:
                     "[display_refresh_curent_mode] No last mode set, displaying the first one"
                 )
             self.display_mode(mode)
+            self.led.off()
         except Exception as e:
             self.led.blink_on(2)
             print(f"[display_refresh_current_mode] Could not refresh current mode {e}")
 
     def update_data(self):
         try:
-            self.led.blink_off()
 
             def fetch_time():
                 t: tuple | None = self.time_handler.get_time()
@@ -152,12 +161,13 @@ class Yearglass:
                 else:
                     print("[update_data] Unable to fetch time.")
 
-            self.buttons.disable_interrupts()
+            self.led.blink_off()
             self.led.on()
+            self.buttons.disable_interrupts()
             fetch_time()
             self.days_elapsed, self.days_total = self.time_handler.get_year_progress()
-            self.led.off()
             self.buttons.enable_interrupts()
+            self.led.off()
         except Exception as e:
             self.led.blink_on(1)
             print(f"[update_data] Failed to update data: {e}")
