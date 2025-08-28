@@ -11,7 +11,7 @@ class TestTimeHandler:
         assert len(t) == 8
 
     def test_get_internal_time(self):
-        t = self.time_handler.get_internal_time()
+        t = self.time_handler.get_pico_time()
         print(f"get_internal_time: {t}")
         assert isinstance(t, tuple)
         assert len(t) == 8

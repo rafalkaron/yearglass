@@ -1,3 +1,4 @@
+import machine  # type: ignore
 import ntptime  # type: ignore
 import utime as time  # type: ignore
 
@@ -7,90 +8,6 @@ class TimeHandler:
         self.gnss = gnss
         self.station = station
         self.rtc = rtc
-
-    def get_time(self, local: bool = True, retries: int | None = 2, delay: int = 1) -> tuple:
-        """
-        Try to get time in order: GNSS -> NTP (WiFi) -> RTC -> Pico internal.
-        GNSS and NTP will update RTC if successful. If RTC update fails, update Pico time.
-        :param local: Return local time (Europe/Warsaw) if True, else UTC
-        :param gnss_uart: UART object for GNSS (if needed)
-        :param retries: Number of retries for GNSS/NTP fetch
-        :param delay: Delay between retries
-        :return: (year, month, mday, hour, minute, second, weekday, yearday)
-        """
-
-        # 1. Try GNSS
-        if self.gnss is not None:
-            t = self.get_gnss_time(local=local, retries=retries, delay=delay)
-            if t is not None:
-                self._update_rtc_time(t)
-                self._update_pico_time(t)
-                return t
-
-        # 2. Try NTP (WiFi)
-        if self.station is not None:
-            if self.station.connect():
-                t = self.get_ntp_time(local=local, retries=retries, delay=delay)
-                if t is not None:
-                    self._update_rtc_time(t)
-                    self._update_pico_time(t)
-                    self.station.disconnect()
-                    self.station.sleep()
-                    return t
-
-        # 3. Try RTC
-        if self.rtc is not None:
-            try:
-                t = self._rtc_to_tuple(self.rtc.get_datetime(), local=local)
-                if t is not None:
-                    self._update_pico_time(t)
-                    return t
-            except Exception as e:
-                print(f"[get_time] RTC failed: {e}")
-
-        # 4. Fallback: Pico internal
-        print("[get_time] Using Pico internal time as fallback.")
-        return self.get_internal_time(local=local)
-
-    def _update_rtc_time(self, t: tuple) -> None:
-        """Try to update RTC with time tuple t."""
-        if self.rtc is not None:
-            try:
-                # t: (year, month, mday, hour, minute, second, weekday, yearday)
-                year, month, mday, hour, minute, second, weekday, _ = t
-                self.rtc.set_datetime(year, month, mday, weekday, hour, minute, second)
-                print("[TimeHandler] RTC updated.")
-            except Exception as e:
-                print(f"[TimeHandler] Failed to update RTC: {e}")
-
-    def _rtc_to_tuple(self, rtc_tuple: tuple, local: bool = True) -> tuple:
-        """
-        Convert RTC tuple (year, month, day, weekday, hour, minute, second)
-        to (year, month, mday, hour, minute, second, weekday, yearday)
-        and apply local offset if needed.
-        """
-        year, month, mday, weekday, hour, minute, second = rtc_tuple
-        # Compose time tuple for mktime
-        t = (year, month, mday, hour, minute, second, weekday, 0)
-        ts = time.mktime(t)
-        if local:
-            if self._is_dst_poland(time.localtime(ts)):
-                offset = 2
-            else:
-                offset = 1
-            ts += offset * 3600
-        local_t = time.localtime(ts)
-        return local_t[:8]
-
-    def _update_pico_time(self, t: tuple) -> None:
-        """Try to update Pico internal clock with time tuple t."""
-        try:
-            import machine
-            year, month, mday, hour, minute, second, _, _ = t
-            machine.RTC().datetime((year, month, mday, 0, hour, minute, second, 0))
-            print("[TimeHandler] Pico internal clock updated.")
-        except Exception as e:
-            print(f"[TimeHandler] Failed to update Pico time: {e}")
 
     def get_year_progress(self) -> tuple:
         """
@@ -134,75 +51,54 @@ class TimeHandler:
             )
             return drift_compensated_time
 
-    def get_internal_time(self, local: bool = True) -> tuple:
+    def get_time(
+        self, local: bool = True, retries: int | None = 2, delay: int = 1
+    ) -> tuple:
         """
-        Return the current internal Pi time as a tuple (year, month, mday, hour, minute, second, weekday, yearday).
-        If local=True, convert to Polish local time (Europe/Warsaw) with DST adjustment.
-        If local=False, return UTC time tuple.
+        Try to get time in order: GNSS -> NTP (WiFi) -> RTC -> Pico internal.
+        GNSS and NTP will update RTC if successful. If RTC update fails, update Pico time.
+        :param local: Return local time (Europe/Warsaw) if True, else UTC
+        :param gnss_uart: UART object for GNSS (if needed)
+        :param retries: Number of retries for GNSS/NTP fetch
+        :param delay: Delay between retries
+        :return: (year, month, mday, hour, minute, second, weekday, yearday)
         """
-        t = time.localtime()
-        if not local:
-            print(f"[get_internal_time] Internal time (UTC): {t}")
-            return t[:8]
-        # t is in UTC
-        if self._is_dst_poland(t):
-            offset = 2  # CEST
-        else:
-            offset = 1  # CET
-        ts = time.mktime(t) + offset * 3600
-        local_t = time.localtime(ts)
-        print(f"[get_internal_time] Internal time (local): {local_t}")
-        return local_t[:8]
 
-    def get_ntp_time(
-        self, local: bool = True, retries: int | None = 5, delay: int = 1
-    ) -> tuple | None:
-        """
-        Fetch current UTC time from NTP and convert to Polish local time (Europe/Warsaw),
-        including DST adjustment if local=True.
-        Retries NTP fetch on failure.
-        If retries is None, retry indefinitely until successful.
-        Returns (year, month, mday, hour, minute, second, weekday, yearday)
-        If local=False, returns UTC time tuple.
-        :param retries: Number of retry attempts for NTP fetch. If None, retry indefinitely.
-        :param delay: Delay between retries (seconds)
-        """
-        attempt = 0
-        while True:
+        # 1. Try GNSS
+        if self.gnss is not None:
+            t = self.get_gnss_time(local=local, retries=retries, delay=delay)
+            if t is not None:
+                self._update_rtc_time(t)
+                self._update_pico_time(t)
+                return t
+
+        # 2. Try NTP (WiFi)
+        if self.station is not None:
+            if self.station.connect():
+                t = self.get_ntp_time(local=local, retries=retries, delay=delay)
+                if t is not None:
+                    self._update_rtc_time(t)
+                    self._update_pico_time(t)
+                    self.station.disconnect()
+                    self.station.sleep()
+                    return t
+
+        # 3. Try RTC
+        if self.rtc is not None:
             try:
-                attempt += 1
-                ntptime.settime()
-                break
+                t = self.get_rtc_time(self.rtc.get_datetime(), local=local)
+                if t is not None:
+                    self._update_pico_time(t)
+                    return t
             except Exception as e:
-                if retries is not None:
-                    print(
-                        f"[get_ntp_time] Error fetching time from NTP: {e} (attempt {attempt}/{retries})"
-                    )
-                else:
-                    print(
-                        f"[get_ntp_time] Error fetching time from NTP: {e} (attempt {attempt})"
-                    )
-                if retries is not None and attempt >= retries:
-                    print("NTP fetch failed after retries.")
-                    return None
-                print(f"Retrying NTP fetch in {delay} seconds...")
-                time.sleep(delay)
-        t = time.localtime()
-        if not local:
-            return t[:8]
-        # t is in UTC
-        if self._is_dst_poland(t):
-            offset = 2  # CEST
-        else:
-            offset = 1  # CET
-        # Convert to local time
-        ts = time.mktime(t) + offset * 3600
-        local_t = time.localtime(ts)
-        print(f"[get_ntp_time] NTP time (local): {local_t}")
-        return local_t[:8]
+                print(f"[get_time] RTC failed: {e}")
+
+        # 4. Fallback: Pico internal
+        print("[get_time] Using Pico internal time as fallback.")
+        return self.get_pico_time(local=local)
 
     def get_gnss_time(
-        self, retries: int | None = 5, delay: int = 1
+        self, local: bool = True, retries: int | None = 5, delay: int = 1
     ) -> tuple | None:
         """
         Fetch current UTC time from a GNSS module via UART and convert to Polish local time (Europe/Warsaw),
@@ -288,6 +184,92 @@ class TimeHandler:
         print(f"[get_gnss_time] GNSS time (local): {local_t}")
         return local_t[:8]
 
+    def get_ntp_time(
+        self, local: bool = True, retries: int | None = 5, delay: int = 1
+    ) -> tuple | None:
+        """
+        Fetch current UTC time from NTP and convert to Polish local time (Europe/Warsaw),
+        including DST adjustment if local=True.
+        Retries NTP fetch on failure.
+        If retries is None, retry indefinitely until successful.
+        Returns (year, month, mday, hour, minute, second, weekday, yearday)
+        If local=False, returns UTC time tuple.
+        :param retries: Number of retry attempts for NTP fetch. If None, retry indefinitely.
+        :param delay: Delay between retries (seconds)
+        """
+        attempt = 0
+        while True:
+            try:
+                attempt += 1
+                ntptime.settime()
+                break
+            except Exception as e:
+                if retries is not None:
+                    print(
+                        f"[get_ntp_time] Error fetching time from NTP: {e} (attempt {attempt}/{retries})"
+                    )
+                else:
+                    print(
+                        f"[get_ntp_time] Error fetching time from NTP: {e} (attempt {attempt})"
+                    )
+                if retries is not None and attempt >= retries:
+                    print("NTP fetch failed after retries.")
+                    return None
+                print(f"Retrying NTP fetch in {delay} seconds...")
+                time.sleep(delay)
+        t = time.localtime()
+        if not local:
+            return t[:8]
+        # t is in UTC
+        if self._is_dst_poland(t):
+            offset = 2  # CEST
+        else:
+            offset = 1  # CET
+        # Convert to local time
+        ts = time.mktime(t) + offset * 3600
+        local_t = time.localtime(ts)
+        print(f"[get_ntp_time] NTP time (local): {local_t}")
+        return local_t[:8]
+
+    def get_rtc_time(self, rtc_tuple: tuple, local: bool = True) -> tuple:
+        """
+        Convert RTC tuple (year, month, day, weekday, hour, minute, second)
+        to (year, month, mday, hour, minute, second, weekday, yearday)
+        and apply local offset if needed.
+        """
+        year, month, mday, weekday, hour, minute, second = rtc_tuple
+        # Compose time tuple for mktime
+        t = (year, month, mday, hour, minute, second, weekday, 0)
+        ts = time.mktime(t)
+        if local:
+            if self._is_dst_poland(time.localtime(ts)):
+                offset = 2
+            else:
+                offset = 1
+            ts += offset * 3600
+        local_t = time.localtime(ts)
+        return local_t[:8]
+
+    def get_pico_time(self, local: bool = True) -> tuple:
+        """
+        Return the current internal Pi time as a tuple (year, month, mday, hour, minute, second, weekday, yearday).
+        If local=True, convert to Polish local time (Europe/Warsaw) with DST adjustment.
+        If local=False, return UTC time tuple.
+        """
+        t = time.localtime()
+        if not local:
+            print(f"[get_internal_time] Internal time (UTC): {t}")
+            return t[:8]
+        # t is in UTC
+        if self._is_dst_poland(t):
+            offset = 2  # CEST
+        else:
+            offset = 1  # CET
+        ts = time.mktime(t) + offset * 3600
+        local_t = time.localtime(ts)
+        print(f"[get_internal_time] Internal time (local): {local_t}")
+        return local_t[:8]
+
     def _is_dst_poland(self, t: tuple) -> bool:
         """
         Determine if DST is in effect in Poland for the given UTC time tuple.
@@ -315,3 +297,23 @@ class TimeHandler:
         now = time.mktime((y, m, d, h, mi, s, 0, 0))  # type: ignore
         print(f"[get_dst_poland] DST in effect: {dst_start <= now < dst_end}")
         return dst_start <= now < dst_end
+
+    def _update_rtc_time(self, t: tuple) -> None:
+        """Try to update RTC with time tuple t."""
+        if self.rtc is not None:
+            try:
+                # t: (year, month, mday, hour, minute, second, weekday, yearday)
+                year, month, mday, hour, minute, second, weekday, _ = t
+                self.rtc.set_datetime(year, month, mday, weekday, hour, minute, second)
+                print("[TimeHandler] RTC updated.")
+            except Exception as e:
+                print(f"[TimeHandler] Failed to update RTC: {e}")
+
+    def _update_pico_time(self, t: tuple) -> None:
+        """Try to update Pico internal clock with time tuple t."""
+        try:
+            year, month, mday, hour, minute, second, _, _ = t
+            machine.RTC().datetime((year, month, mday, 0, hour, minute, second, 0))
+            print("[TimeHandler] Pico internal clock updated.")
+        except Exception as e:
+            print(f"[TimeHandler] Failed to update Pico time: {e}")
