@@ -37,8 +37,18 @@ class Yearglass:
             on_key2=self.display_random_mode,
             on_key3=self.display_previous_mode,
         )
-        self.gnss = Gnss()
-        self.rtc = Rtc()
+        try:
+            self.gnss = Gnss()
+        except Exception as e:
+            print(f"[Yearglass] Could not initialize Gnss: {e}")
+            self.led.blink_on(3)
+            self.gnss = None
+        try:
+            self.rtc = Rtc()
+        except Exception as e:
+            print(f"[Yearglass] Could not initialize Rtc: {e}")
+            self.led.blink_on(3)
+            self.rtc = None
 
         # Handlers
         self.time_handler = TimeHandler(gnss=self.gnss, station=self.sta, rtc=self.rtc)

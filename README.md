@@ -32,13 +32,14 @@ Yearglass includes the following visualization modes:
 
 Yearglass internal LED indicates the following:
 
-| LED Status                | Description                          |
-|---------------------------|--------------------------------------|
-| Off                       | Idle or powered down                 |
-| On                        | Busy with getting or displaying data |
-| Blinking every 1s         | Problem with updating data           |
-| Blinking every 2s         | Problem with displaying data         |
-| Blinking every 0.5s       | Problem in the main loop             |
+| LED Status                | Description                                   |
+|---------------------------|-----------------------------------------------|
+| Off                       | Idle or powered down                          |
+| On                        | Busy with getting or displaying data          |
+| Blinking every 0.5s       | Problem in the main loop                      |
+| Blinking every 1s         | Problem with updating data                    |
+| Blinking every 2s         | Problem with displaying data                  |
+| Blinking every 3s         | Problem with optional hardware initialization |
 
 ## Development
 
