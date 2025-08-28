@@ -18,7 +18,7 @@ class TimeHandler:
         """
         t = None
         if self.rtc is not None:
-            t = self.get_rtc_time(self.rtc.get_datetime(), local=True)
+            t = self.get_rtc_time(local=True)
         if t is None:
             print(
                 "[get_year_progress] RTC failed or returned None, using Pico internal time..."
@@ -54,7 +54,7 @@ class TimeHandler:
             # Try RTC first, fallback to Pico internal time if None
             t = None
             if self.rtc is not None:
-                t = self.get_rtc_time(self.rtc.get_datetime(), local=True)
+                t = self.get_rtc_time(local=True)
             if t is None:
                 t = self.get_pico_time(local=True)
             if t is None:
