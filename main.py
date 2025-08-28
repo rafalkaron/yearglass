@@ -122,6 +122,7 @@ class Yearglass:
 
     def update_data(self):
         try:
+            self.led.blink_off()
 
             def fetch_time():
                 t: tuple | None = self.time_handler.get_time()
@@ -138,6 +139,7 @@ class Yearglass:
             self.led.off()
             self.buttons.enable_interrupts()
         except Exception as e:
+            self.led.blink_on(1)
             print(f"[update_data] Failed to update data: {e}")
 
 
@@ -151,7 +153,7 @@ def main():
 
     except Exception as e:
         try:
-            yearglass.led.on()
+            yearglass.led.blink_on(0.5)
         except Exception:
             pass
         print(f"[main] Error: {e}")
