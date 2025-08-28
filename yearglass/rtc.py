@@ -1,11 +1,13 @@
 from machine import I2C, Pin
 
+
 class Rtc:
     """
     RTC controller for PCF8563 I2C module on Raspberry Pi Pico W (MicroPython).
     Allows reading and setting date/time using I2C.
     If no I2C object is provided, initializes I2C(0) on GP4 (SDA) and GP5 (SCL).
     """
+
     def __init__(self, i2c: I2C | None = None, address: int = 0x51):
         """
         Initialize RTC with given I2C bus and device address.
@@ -50,7 +52,16 @@ class Rtc:
         year = 2000 + self._bcd2dec(data[6])
         return (year, month, day, weekday, hour, minute, second)
 
-    def set_datetime(self, year: int, month: int, day: int, weekday: int, hour: int, minute: int, second: int) -> None:
+    def set_datetime(
+        self,
+        year: int,
+        month: int,
+        day: int,
+        weekday: int,
+        hour: int,
+        minute: int,
+        second: int,
+    ) -> None:
         """
         Set date and time on RTC.
         :param year: Full year (e.g. 2025)

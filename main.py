@@ -3,14 +3,14 @@ import utime  # type: ignore
 
 from yearglass.buttons import Buttons
 from yearglass.epaper import EPaper
-from yearglass.led import Led
 from yearglass.gnss import Gnss
+from yearglass.led import Led
 from yearglass.rtc import Rtc
 from yearglass.time_handler import TimeHandler
 from yearglass.time_visualizer import TimeVisualizer
 
 try:
-    from config import WIFI_PASSWORD, WIFI_SSID
+    from config import WIFI_PASSWORD, WIFI_SSID  # type: ignore
     from yearglass.wifi import Station
 except ImportError:
     WIFI_PASSWORD = None
@@ -115,14 +115,18 @@ class Yearglass:
             mode = self.current_display_mode
         else:
             mode = self.display_modes[0]
-            print("[update_data] No last mode set, defaulting to the first one")
+            print(
+                "[display_refresh_curent_mode] No last mode set, displaying the first one"
+            )
         self.display_mode(mode)
 
     def update_data(self):
         self.buttons.disable_interrupts()
         self.led.on()
+        t: tuple = self.time_handler.get_time()
+        timestamp: str = self.time_visualizer.render_time_str(t)
+        print(f"[update_data] Updated data at: {timestamp}")
         self.days_elapsed, self.days_total = self.time_handler.get_year_progress()
-        self.seconds_till_midnight: int = self.time_handler.get_seconds_till_midnight()
         self.led.off()
         self.buttons.enable_interrupts()
 
@@ -133,7 +137,7 @@ def main():
         while True:
             yearglass.update_data()
             yearglass.display_refresh_current_mode()
-            utime.sleep(yearglass.seconds_till_midnight)
+            utime.sleep(yearglass.time_handler.get_seconds_till_midnight())
 
     except Exception as e:
         try:
