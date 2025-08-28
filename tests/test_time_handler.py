@@ -1,8 +1,23 @@
+from yearglass.gnss import Gnss
+from yearglass.rtc import Rtc
 from yearglass.time_handler import TimeHandler
+
+try:
+    from config import WIFI_PASSWORD, WIFI_SSID  # type: ignore
+    from yearglass.wifi import Station
+except ImportError:
+    WIFI_PASSWORD = None
+    WIFI_SSID = None
 
 
 class TestTimeHandler:
-    time_handler = TimeHandler()
+    gnss = Gnss()
+    rtc = Rtc()
+    if WIFI_SSID is not None and WIFI_PASSWORD is not None:
+        sta = Station(WIFI_SSID, WIFI_PASSWORD)
+    else:
+        sta = None
+    time_handler = TimeHandler(gnss=gnss, rtc=rtc, station=sta)
 
     def test_get_year_progress(self):
         days_elapsed, days_total = self.time_handler.get_year_progress()
