@@ -231,23 +231,20 @@ class TimeHandler:
 
     def get_ntp_time(
         self, local: bool = True, retries: int | None = 5, delay: int = 1
-    ) -> tuple | None:
+    ) -> tuple[int, int, int, int, int, int, int, int] | None:
         """
         Fetch current UTC time from NTP and convert to Polish local time (Europe/Warsaw),
-        including DST adjustment if local=True.
-        Retries NTP fetch on failure.
+        including DST adjustment if local=True. Retries NTP fetch on failure.
         If retries is None, retry indefinitely until successful.
-        Returns (year, month, mday, hour, minute, second, weekday, yearday)
-        If local=False, returns UTC time tuple.
-        :param retries: Number of retry attempts for NTP fetch. If None, retry indefinitely.
-        :param delay: Delay between retries (seconds)
+        Returns a tuple matching time.localtime():
+            (year, month, mday, hour, minute, second, weekday, yearday)
+        or None on failure.
         """
         attempt = 0
         while True:
+            attempt += 1
             try:
-                attempt += 1
                 ntptime.settime()
-                break
             except Exception as e:
                 if retries is not None:
                     print(
@@ -262,15 +259,15 @@ class TimeHandler:
                     return None
                 print(f"Retrying NTP fetch in {delay} seconds...")
                 time.sleep(delay)
+                continue
+            break
+
         t = time.localtime()
         if not local:
+            print(f"[get_ntp_time] NTP time (UTC): {t}")
             return t[:8]
         # t is in UTC
-        if self._is_dst_poland(t):
-            offset = 2  # CEST
-        else:
-            offset = 1  # CET
-        # Convert to local time
+        offset = 2 if self._is_dst_poland(t) else 1
         ts = time.mktime(t) + offset * 3600
         local_t = time.localtime(ts)
         print(f"[get_ntp_time] NTP time (local): {local_t}")
