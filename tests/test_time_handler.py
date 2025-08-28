@@ -38,6 +38,12 @@ class TestTimeHandler:
         assert isinstance(t, tuple)
         assert len(t) == 8
 
+    def test_get_rtc_time(self):
+        t = self.time_handler.get_rtc_time()
+        print(f"get_rtc_time: {t}")
+        assert isinstance(t, tuple)
+        assert len(t) == 8
+
     def test_get_pico_time(self):
         t = self.time_handler.get_pico_time()
         print(f"get_pico_time: {t}")
@@ -76,6 +82,7 @@ class TestTimeHandler:
         self.test_get_year_progress()
         self.test_get_seconds_till_midnight()
         self.test_get_ntp_time()
+        self.test_get_rtc_time()
         self.test_get_pico_time()
         self.test_is_dst_poland()
         self.test_update_rtc_time()

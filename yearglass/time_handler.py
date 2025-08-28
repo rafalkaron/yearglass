@@ -124,7 +124,7 @@ class TimeHandler:
         # 3. Try RTC
         if self.rtc is not None:
             try:
-                t = self.get_rtc_time(self.rtc.get_datetime(), local=local)
+                t = self.get_rtc_time(local=local)
                 if t is not None:
                     self._update_pico_time(t)
                     return t
@@ -274,7 +274,7 @@ class TimeHandler:
         return local_t[:8]
 
     def get_rtc_time(
-        self, rtc_tuple: tuple, local: bool = True
+        self, local: bool = True
     ) -> tuple[int, int, int, int, int, int, int, int] | None:
         """
         Convert RTC tuple (year, month, day, weekday, hour, minute, second)
@@ -283,6 +283,7 @@ class TimeHandler:
         Applies local offset if needed. Returns None if any error occurs.
         """
         try:
+            rtc_tuple = self.rtc.get_datetime()  # type: ignore
             year, month, mday, weekday, hour, minute, second = rtc_tuple
         except Exception as e:
             print(f"[get_rtc_time] Invalid RTC tuple: {e}")
