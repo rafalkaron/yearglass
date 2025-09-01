@@ -62,17 +62,17 @@ class TestTimeVisualizer:
         print("[Yearglass: 0 elapsed]")
         result = self.time_visualizer.render_hourglass(0, 365)
         assert isinstance(result, str)
-        assert result.count("*") == 365
+        assert result.count(".") == 365
 
     def test_render_hourglass_all_elapsed(self):
         print("[Yearglass: All elapsed]")
         result_full = self.time_visualizer.render_hourglass(365, 365)
-        assert result_full.count("*") == 365
+        assert result_full.count(".") == 365
 
     def test_render_hourglass_half_elapsed(self):
         print("[Yearglass: Half elapsed]")
         result_half = self.time_visualizer.render_hourglass(182, 365)
-        assert result_half.count("*") == 365
+        assert result_half.count(".") == 365
 
     def test_render_time_str_normal(self):
         t = (2025, 8, 17, 12, 34, 56)
