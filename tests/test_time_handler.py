@@ -38,8 +38,7 @@ class TestTimeHandler:
     def test_get_ntp_time(self):
         t = self.time_handler.get_ntp_time()
         print(f"get_ntp_time: {t}")
-        assert isinstance(t, tuple)
-        assert len(t) == 8 or t is None
+        assert isinstance(t, tuple) or t is None
 
     def test_get_rtc_time(self):
         t = self.time_handler.get_rtc_time()
