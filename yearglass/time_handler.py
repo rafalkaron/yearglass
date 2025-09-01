@@ -4,8 +4,7 @@ import utime as time  # type: ignore
 
 
 class TimeHandler:
-    def __init__(self, gnss=None, station=None, rtc=None):
-        self.gnss = gnss
+    def __init__(self, station=None, rtc=None):
         self.station = station
         self.rtc = rtc
 
@@ -91,26 +90,13 @@ class TimeHandler:
         self, local: bool = True, retries: int | None = 2, delay: int = 1
     ) -> tuple | None:
         """
-        Try to get time in order: GNSS -> NTP (WiFi) -> RTC -> Pico internal.
-        GNSS and NTP will update RTC if successful. If RTC update fails, update Pico time.
+        Try to get time in order: NTP (WiFi) -> RTC -> Pico internal.
         :param local: Return local time (Europe/Warsaw) if True, else UTC
-        :param gnss_uart: UART object for GNSS (if needed)
-        :param retries: Number of retries for GNSS/NTP fetch
+        :param retries: Number of retries for NTP fetch
         :param delay: Delay between retries
         :return: (year, month, mday, hour, minute, second, weekday, yearday)
         """
 
-        # 1. Try GNSS
-        if self.gnss is not None:
-            self.gnss.wake()
-            t = self.get_gnss_time(local=local, retries=retries, delay=delay)
-            self.gnss.sleep()
-            if t is not None:
-                self._update_rtc_time(t)
-                self._update_pico_time(t)
-                return t
-
-        # 2. Try NTP (WiFi)
         if self.station is not None:
             if self.station.connect():
                 t = self.get_ntp_time(local=local, retries=retries, delay=delay)
@@ -121,7 +107,6 @@ class TimeHandler:
                     self._update_pico_time(t)
                     return t
 
-        # 3. Try RTC
         if self.rtc is not None:
             try:
                 t = self.get_rtc_time(local=local)
@@ -131,7 +116,6 @@ class TimeHandler:
             except Exception as e:
                 print(f"[get_time] RTC failed: {e}")
 
-        # 4. Fallback: Pico internal
         try:
             t = self.get_pico_time(local=local)
             if t is not None:
@@ -139,95 +123,6 @@ class TimeHandler:
         except Exception as e:
             print(f"[get_time] Unable to get time from Pico: {e}")
             return None
-
-    def get_gnss_time(
-        self, local: bool = True, retries: int | None = 5, delay: int = 1
-    ) -> tuple[int, int, int, int, int, int, int, int] | None:
-        """
-        Fetch current UTC time from a GNSS module via UART and convert to Polish local time (Europe/Warsaw),
-        including DST adjustment if local=True. Retries GNSS fetch on failure.
-        If retries is None, retry indefinitely until successful.
-        Returns a tuple matching time.localtime():
-            (year, month, mday, hour, minute, second, weekday, yearday)
-        or None on failure.
-        """
-
-        def _parse_gprmc(
-            line: str,
-        ) -> tuple[int, int, int, int, int, int, int, int] | None:
-            fields = line.strip().split(",")
-            if len(fields) < 10 or fields[2] != "A":
-                return None
-            time_str = fields[1]
-            date_str = fields[9]
-            if not time_str or not date_str:
-                return None
-            try:
-                hour = int(time_str[0:2])
-                minute = int(time_str[2:4])
-                second = int(time_str[4:6])
-                day = int(date_str[0:2])
-                month = int(date_str[2:4])
-                year = 2000 + int(date_str[4:6])
-                return (year, month, day, hour, minute, second, 0, 0)
-            except Exception:
-                return None
-
-        attempt = 0
-        while True:
-            attempt += 1
-            # Flush input buffer (with a max flush count to avoid infinite loop)
-            flush_count = 0
-            while self.gnss.uart.any():  # type: ignore
-                self.gnss.uart.read()  # type: ignore
-                flush_count += 1
-                if flush_count > 100:
-                    break
-
-            # Wait for a valid GPRMC sentence
-            timeout = 5
-            t0 = time.time()
-            gnss_time = None
-            while time.time() - t0 < timeout:
-                line = self.gnss.uart.readline()  # type: ignore
-                if not line:
-                    continue
-                try:
-                    line = line.decode()
-                except Exception:
-                    continue
-                if line.startswith("$GPRMC"):
-                    gnss_time = _parse_gprmc(line)
-                    if gnss_time:
-                        break
-            if not gnss_time:
-                if retries is not None:
-                    print(
-                        f"[get_gnss_time] No valid GPRMC sentence (attempt {attempt}/{retries})"
-                    )
-                else:
-                    print(
-                        f"[get_gnss_time] No valid GPRMC sentence (attempt {attempt})"
-                    )
-                if retries is not None and attempt >= retries:
-                    print("GNSS fetch failed after retries.")
-                    return None
-                print(f"Retrying GNSS fetch in {delay} seconds...")
-                time.sleep(delay)
-                continue
-
-            # Calculate weekday and yearday
-            ts = time.mktime(gnss_time)
-            t_full = time.localtime(ts)
-            if not local:
-                print(f"[get_gnss_time] GNSS time (UTC): {t_full}")
-                return t_full[:8]
-            # t is in UTC
-            offset = 2 if self._is_dst_poland(t_full) else 1
-            ts_local = ts + offset * 3600
-            local_t = time.localtime(ts_local)
-            print(f"[get_gnss_time] GNSS time (local): {local_t}")
-            return local_t[:8]
 
     def get_ntp_time(
         self, local: bool = True, retries: int | None = 5, delay: int = 1

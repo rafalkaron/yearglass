@@ -3,7 +3,6 @@ import utime  # type: ignore
 
 from yearglass.buttons import Buttons
 from yearglass.epaper import EPaper
-from yearglass.gnss import Gnss
 from yearglass.led import Led
 from yearglass.rtc import Rtc
 from yearglass.time_handler import TimeHandler
@@ -38,12 +37,6 @@ class Yearglass:
             on_key3=self.display_previous_mode,
         )
         try:
-            self.gnss = Gnss()
-        except Exception as e:
-            print(f"[Yearglass] Could not initialize Gnss: {e}")
-            self.led.blink_on(3)
-            self.gnss = None
-        try:
             self.rtc = Rtc()
         except Exception as e:
             print(f"[Yearglass] Could not initialize Rtc: {e}")
@@ -51,7 +44,7 @@ class Yearglass:
             self.rtc = None
 
         # Handlers
-        self.time_handler = TimeHandler(gnss=self.gnss, station=self.sta, rtc=self.rtc)
+        self.time_handler = TimeHandler(station=self.sta, rtc=self.rtc)
         self.time_visualizer = TimeVisualizer(
             max_cols=self.epd.max_columns,
             max_rows=self.epd.max_rows,

@@ -58,9 +58,6 @@ Yearglass is coded with power-efficiency in mind.
     WIFI_SSID = "WiFiNetworkName"
     WIFI_PASSWORD = "WiFiPassword"
     ```
-
-    **TIP:** Obtaining time from WiFi is useful if you don't want to install a GNSS module.
-
 3. Upload the necessary files from this repository to Raspberry Pi Pico W(H).
 
 ### Components reference
@@ -71,7 +68,6 @@ Yearglass uses low-power components to ensure long operation on a single charge.
 |-------------------|----------|--------------------------------------------------------------------------------|
 | Controller        | 1        | Raspberry Pi Pico W(H)                                                         |
 | Display           | 1        | Waveshare Pico-ePaper-2.7 (264x176 Pixels)                                     |
-| GNSS module       | 1        | Seeed Xiao - L76K - GPS, BeiDou, GLONASS, QZSS - Seeedstudio 109100021         |
 | RTC module        | 1        | RTC PCF8563 I2C - Waveshare 3707                                               |
 | Battery           | 3        | AA NiMH rechargeable batteries (1.2V each, connected in series for 3.6V total) |
 | Battery pack      | 1        | For 3 AA batteries                                                             |
@@ -82,8 +78,8 @@ Yearglass uses low-power components to ensure long operation on a single charge.
 
 | Pico W Pin      | Connects to                      | Description                              |
 |-----------------|----------------------------------|------------------------------------------|
-| VSYS            | VCC (Display, GNSS, RTC)         | Power input (3.3V/5V as required)        |
-| GND             | GND (Display, GNSS, RTC)         | Ground                                   |
+| VSYS            | VCC (Display, RTC)               | Power input (3.3V/5V as required)        |
+| GND             | GND (Display, RTC)               | Ground                                   |
 | GP11            | DIN (MOSI, Display)              | MOSI pin of SPI interface (Display)      |
 | GP10            | CLK (SCK, Display)               | SCK pin of SPI interface (Display)       |
 | GP9             | CS (Display)                     | Chip select pin, Low Active (Display)    |
@@ -95,6 +91,3 @@ Yearglass uses low-power components to ensure long operation on a single charge.
 | GP2             | KEY3 (Bottom-left Button)        | Button 3 input                           |
 | GP4             | SDA (RTC)                        | I2C SDA for RTC PCF8563                  |
 | GP5             | SCL (RTC)                        | I2C SCL for RTC PCF8563                  |
-| GP0             | TX (GNSS)                        | UART TX to GNSS module                   |
-| GP1             | RX (GNSS)                        | UART RX from GNSS module                 |
-| GP6             | WUP (GNSS)                       | GNSS Wake Up pin for sleep control       |
