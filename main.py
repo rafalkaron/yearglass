@@ -81,6 +81,7 @@ class Yearglass:
         config: str = self.ap.render_configuration()
         print(config)
         self.epd.display_text_rows(config)
+        self.webserver.run()
         self.buttons.enable_interrupts()
         self.led.off()
 

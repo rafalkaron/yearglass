@@ -1,42 +1,36 @@
 import socket
 
-import uasyncio as asyncio  # type: ignore
-
 
 class Webserver:
     def __init__(self, host: str = "0.0.0.0", port: int = 80):
         self.host = host
         self.port = port
         self.html_path = "yearglass/index.hml"
+        self.ssid = None
+        self.password = None
+        self.timezone = None
 
-        self.ssid: str | None = None
-        self.password: str | None = None
-        self.timezone: str | None = None
-
-    async def run(self) -> None:
+    def run(self) -> None:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind((self.host, self.port))
         s.listen(1)
-        s.setblocking(False)
         print(f"Webserver running on http://{self.host}:{self.port}")
         try:
             while True:
                 try:
-                    conn, _ = await asyncio.wait_for(
-                        asyncio.get_event_loop().sock_accept(s), 10
-                    )
-                    asyncio.create_task(self.handle_request(conn))
-                except asyncio.TimeoutError:
-                    await asyncio.sleep(0.1)
+                    conn, _ = s.accept()
+                    self.handle_request(conn)
+                except Exception as e:
+                    print(f"Webserver accept error: {e}")
         except Exception as e:
             print(f"Webserver error: {e}")
         finally:
             s.close()
 
-    async def handle_request(self, conn):
+    def handle_request(self, conn):
         try:
-            request = await asyncio.get_event_loop().sock_recv(conn, 2048)
+            request = conn.recv(2048)
             if not request:
                 conn.close()
                 return
@@ -45,16 +39,16 @@ class Webserver:
             if method == "GET":
                 html = self._read_html()
                 response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n" + html
-                await asyncio.get_event_loop().sock_sendall(conn, response.encode())
+                conn.sendall(response.encode())
             elif method == "POST":
                 body = request.split("\r\n\r\n", 1)[-1]
                 fields = self._parse_data(body)
                 self._update_data(fields)
                 response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\nOK"
-                await asyncio.get_event_loop().sock_sendall(conn, response.encode())
+                conn.sendall(response.encode())
             else:
                 response = "HTTP/1.1 405 Method Not Allowed\r\n\r\n"
-                await asyncio.get_event_loop().sock_sendall(conn, response.encode())
+                conn.sendall(response.encode())
         except Exception as e:
             error_html = f"<h1>Internal server error: {e}</h1>"
             response = (
@@ -62,7 +56,7 @@ class Webserver:
                 + error_html
             )
             try:
-                await asyncio.get_event_loop().sock_sendall(conn, response.encode())
+                conn.sendall(response.encode())
             except Exception:
                 pass
         finally:
@@ -95,6 +89,6 @@ class Webserver:
 
 if __name__ == "__main__":
     try:
-        asyncio.run(Webserver().run())
+        Webserver().run()
     except (KeyboardInterrupt, Exception) as e:
         print(f"Server stopped: {e}")
