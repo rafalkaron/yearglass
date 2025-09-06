@@ -11,55 +11,107 @@ class Webserver:
         self.timezone = None
 
     def run(self) -> None:
+        """Start the webserver and handle requests until a POST is received."""
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind((self.host, self.port))
         s.listen(1)
         print(f"Webserver running on http://{self.host}:{self.port}")
         try:
-            try:
-                conn, _ = s.accept()
-                self.handle_request(conn)
-            except Exception as e:
-                print(f"Webserver accept error: {e}")
+            while True:
+                try:
+                    conn, _ = s.accept()
+                    should_stop = self.handle_request(conn)
+                    if should_stop:
+                        break
+                except Exception as e:
+                    print(f"Webserver accept error: {e}")
         except Exception as e:
             print(f"Webserver error: {e}")
         finally:
             s.close()
 
-    def handle_request(self, conn):
+    def handle_request(self, conn: socket.socket) -> bool:
+        """Handle a single HTTP request. Returns True if server should stop (after POST)."""
         try:
             request = conn.recv(2048)
             if not request:
                 conn.close()
-                return
+                return False
             request = request.decode("utf-8")
             method, _, *_ = request.split(" ", 2)
             if method == "GET":
-                html = self._read_html()
-                response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n" + html
-                conn.sendall(response.encode())
+                self._handle_get(conn)
+                return False
             elif method == "POST":
-                body = request.split("\r\n\r\n", 1)[-1]
-                fields = self._parse_data(body)
-                self._update_data(fields)
-                response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\nOK"
-                conn.sendall(response.encode())
+                self._handle_post(conn, request)
+                return True
             else:
-                response = "HTTP/1.1 405 Method Not Allowed\r\n\r\n"
-                conn.sendall(response.encode())
+                self._send_response(
+                    conn,
+                    "405 Method Not Allowed",
+                    "text/html",
+                    "<h1>405 Method Not Allowed</h1>",
+                )
+                return False
         except Exception as e:
             error_html = f"<h1>Internal server error: {e}</h1>"
-            response = (
-                "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/html\r\n\r\n"
-                + error_html
+            self._send_response(
+                conn, "500 Internal Server Error", "text/html", error_html
             )
-            try:
-                conn.sendall(response.encode())
-            except Exception:
-                pass
+            return False
         finally:
             conn.close()
+
+    def _handle_get(self, conn: socket.socket) -> None:
+        """Serve the configuration HTML page."""
+        html = self._read_html()
+        self._send_response(conn, "200 OK", "text/html", html)
+
+    def _handle_post(self, conn: socket.socket, request: str) -> None:
+        """Handle form submission, validate, update, and respond."""
+        body = request.split("\r\n\r\n", 1)[-1]
+        fields = self._parse_data(body)
+        if not self._validate_fields(fields):
+            self._send_response(
+                conn, "400 Bad Request", "text/html", "<h1>Invalid input</h1>"
+            )
+            return
+        self._update_data(fields)
+        # Mask password in log
+        pw_log = (
+            "*" * len(fields.get("wifi-password", ""))
+            if fields.get("wifi-password")
+            else ""
+        )
+        print(
+            f"Received config: ssid={fields.get('ssid', '')}, wifi-password={pw_log}, timezone={fields.get('timezone', '')}"
+        )
+        html = """
+        <html><body><h1>Settings saved!</h1><p>You may now close this page.</p></body></html>
+        """
+        self._send_response(conn, "200 OK", "text/html", html)
+
+    def _send_response(
+        self, conn: socket.socket, status: str, content_type: str, body: str
+    ) -> None:
+        """Send an HTTP response with proper headers."""
+        body_bytes = body.encode()
+        headers = (
+            f"HTTP/1.1 {status}\r\n"
+            f"Content-Type: {content_type}\r\n"
+            f"Content-Length: {len(body_bytes)}\r\n"
+            f"Connection: close\r\n"
+            f"\r\n"
+        )
+        conn.sendall(headers.encode() + body_bytes)
+
+    def _validate_fields(self, fields: dict) -> bool:
+        """Validate POSTed form fields."""
+        ssid = fields.get("ssid", "")
+        password = fields.get("wifi-password", "")
+        # Basic validation: non-empty
+        return bool(ssid and password)
 
     def _read_html(self) -> str:
         try:
