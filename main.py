@@ -36,9 +36,9 @@ class Yearglass:
             key2_pin=17,
             key3_pin=2,
             on_key1=self.display_next_mode,
-            on_key1_long=self.update_data,
+            on_key1_long=self.display_refresh_current_mode,
             on_key2=self.display_random_mode,
-            on_key2_long=self.display_refresh_current_mode,
+            on_key2_long=self.update_data,
             on_key3=self.display_previous_mode,
             on_key3_long=self.display_configuration,
         )
@@ -93,6 +93,7 @@ class Yearglass:
         else:
             self.sta = None
         self.ap.stop()
+        self.time_handler = TimeHandler(station=self.sta, rtc=self.rtc)
         self.buttons.enable_interrupts()
         self.led.off()
 
