@@ -12,12 +12,23 @@ class Webserver:
         self.password: str | None = None
         self.timezone: str | None = None
 
-    def read_html(self) -> str:
+    def run(self) -> None:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            with open(self.html_path, "r") as f:
-                return f.read()
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind((self.host, self.port))
+            s.listen(1)
+            print(f"Webserver running on http://{self.host}:{self.port}")
+            while True:
+                conn, _ = s.accept()
+                try:
+                    self.handle_request(conn)
+                finally:
+                    conn.close()
         except Exception as e:
-            return f"<h1>Error loading configuration page: {e}</h1>"
+            print(f"Webserver error: {e}")
+        finally:
+            s.close()
 
     def handle_request(self, conn):
         try:
@@ -27,7 +38,7 @@ class Webserver:
             request = request.decode("utf-8", errors="ignore")
             method, _, *_ = request.split(" ", 2)
             if method == "GET":
-                html = self.read_html()
+                html = self._read_html()
                 response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n" + html
                 conn.sendall(response.encode())
             elif method == "POST":
@@ -49,6 +60,13 @@ class Webserver:
             except Exception:
                 pass
 
+    def _read_html(self) -> str:
+        try:
+            with open(self.html_path, "r") as f:
+                return f.read()
+        except Exception as e:
+            return f"<h1>Error loading configuration page: {e}</h1>"
+
     def _parse_data(self, data: str) -> dict:
         result = {}
         try:
@@ -65,24 +83,6 @@ class Webserver:
         self.ssid = fields.get("ssid", None)
         self.password = fields.get("wifi-password", None)
         self.timezone = fields.get("timezone", "0")
-
-    def run(self) -> None:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            s.bind((self.host, self.port))
-            s.listen(1)
-            print(f"Webserver running on http://{self.host}:{self.port}")
-            while True:
-                conn, addr = s.accept()
-                try:
-                    self.handle_request(conn)
-                finally:
-                    conn.close()
-        except Exception as e:
-            print(f"Webserver error: {e}")
-        finally:
-            s.close()
 
 
 if __name__ == "__main__":
