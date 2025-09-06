@@ -5,7 +5,7 @@ class Webserver:
     def __init__(self, host: str = "0.0.0.0", port: int = 80):
         self.host = host
         self.port = port
-        self.html_path = "yearglass/index.hml"
+        self.html_path = "yearglass/index.html"
         self.ssid = None
         self.password = None
         self.timezone = None
