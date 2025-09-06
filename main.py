@@ -7,10 +7,12 @@ from yearglass.led import Led
 from yearglass.rtc import Rtc
 from yearglass.time_handler import TimeHandler
 from yearglass.time_visualizer import TimeVisualizer
+from yearglass.webserver import Webserver
+from yearglass.wifi import AccessPoint, Station
 
 try:
     from config import WIFI_PASSWORD, WIFI_SSID  # type: ignore
-    from yearglass.wifi import Station
+
 except ImportError:
     WIFI_PASSWORD = None
     WIFI_SSID = None
@@ -25,7 +27,14 @@ class Yearglass:
         if WIFI_SSID is not None and WIFI_PASSWORD is not None:
             self.sta = Station(WIFI_SSID, WIFI_PASSWORD)
         else:
-            self.sta = None
+            try:
+                self.sta = None
+                self.ap = AccessPoint()
+                self.webserver = Webserver()
+                self.display_configuration()
+            except Exception as e:
+                print(f"Unable to complete configuration: {e}")
+                self.sta = None
         self.led = Led("LED")
         self.epd = EPaper()
         self.buttons = Buttons(
@@ -64,9 +73,12 @@ class Yearglass:
         self.current_display_mode: str = "crossout"
 
     def display_configuration(self) -> None:
+        """Display configuration screen to prompt user to open web interface."""
         self.led.on()
         self.buttons.disable_interrupts()
-
+        config: str = self.ap.render_configuration()
+        print(config)
+        self.epd.display_text_rows(config)
         self.buttons.enable_interrupts()
         self.led.off()
 
