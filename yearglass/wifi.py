@@ -96,3 +96,18 @@ class AccessPoint:
                 print("Stopped Access Point...")
             except Exception as e:
                 print(f"Unable to stop Access Point: {e}")
+
+    def render_configuration(self) -> str:
+        """Render multiline configuration string to display on epaper."""
+        try:
+            return f"""Configuration
+1. Connect to Yearglass WiFi:
+   SSID: {self.essid}
+   PASS: {self.password}
+2. Open http://192.168.4.1
+3. Follow instructions.
+"""
+        except Exception as e:
+            print(f"Unable to render dynamic configuration screen: {e}")
+            return """Configuration
+See Yearglass docs."""

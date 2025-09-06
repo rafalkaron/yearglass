@@ -63,6 +63,13 @@ class Yearglass:
         self.seconds_till_midnight: int = 1
         self.current_display_mode: str = "crossout"
 
+    def display_configuration(self) -> None:
+        self.led.on()
+        self.buttons.disable_interrupts()
+
+        self.buttons.enable_interrupts()
+        self.led.off()
+
     def display_mode(self, mode: str) -> None:
         try:
             # NOTE: display mode methods must be named render_<mode>
