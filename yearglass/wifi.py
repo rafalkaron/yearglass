@@ -99,10 +99,14 @@ class AccessPoint:
         """Render multiline configuration string to display on epaper."""
         try:
             return f"""Configuration
+
+
 1. Connect to WiFi:
    SSID: {self.essid}
    PASS: {self.password}
+
 2. Open 192.168.4.1
+
 3. Follow instructions
 """
         except Exception as e:
