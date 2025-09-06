@@ -1,3 +1,4 @@
+import os
 import socket
 
 
@@ -181,6 +182,25 @@ class Webserver:
     def _update_data(self, fields: dict):
         self.ssid = fields.get("ssid", None)
         self.password = fields.get("wifi-password", None)
+
+        config_path = "config.py"
+        config_content = (
+            f"WIFI_SSID = '{self.ssid}'\nWIFI_PASSWORD = '{self.password}'\n"
+        )
+        try:
+            try:
+                os.stat(config_path)
+                # File exists, overwrite
+                with open(config_path, "w") as f:
+                    f.write(config_content)
+                    print("Updated config file.")
+            except OSError:
+                # File does not exist, create
+                with open(config_path, "w") as f:
+                    f.write(config_content)
+                    print("Created new config file.")
+        except Exception as e:
+            print(f"Failed to save config: {e}")
 
 
 if __name__ == "__main__":
