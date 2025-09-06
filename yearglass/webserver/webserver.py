@@ -6,7 +6,8 @@ class Webserver:
     def __init__(self, host: str = "0.0.0.0", port: int = 80):
         self.host = host
         self.port = port
-        self.html_path = "yearglass/index.html"
+        self.html_index = "yearglass/webserver/index.html"
+        self.html_applied = "yearglass/webserver/applied.html"
         self.ssid = None
         self.password = None
 
@@ -141,7 +142,7 @@ class Webserver:
 
     def _read_html(self) -> str:
         try:
-            with open(self.html_path, "r") as f:
+            with open(self.html_index, "r") as f:
                 return f.read()
         except Exception as e:
             return f"<h1>Error loading page: {e}</h1>"
