@@ -87,42 +87,63 @@ class TimeHandler:
             return fallback_time
 
     def get_time(
-        self, local: bool = True, retries: int | None = 2, delay: int = 1
+        self, local: bool = True, retries: int | None = 2, delay: int = 15
     ) -> tuple | None:
         """
         Try to get time in order: NTP (WiFi) -> RTC -> Pico internal.
+        Always stores and updates RTC/Pico in UTC. Only converts to local (Europe/Warsaw) if requested.
         :param local: Return local time (Europe/Warsaw) if True, else UTC
         :param retries: Number of retries for NTP fetch
         :param delay: Delay between retries
         :return: (year, month, mday, hour, minute, second, weekday, yearday)
         """
 
+        # Try NTP (UTC)
         if self.station is not None:
             if self.station.connect():
-                t = self.get_ntp_time(local=local, retries=retries, delay=delay)
+                t_ntp = self.get_ntp_time(local=False, retries=retries, delay=delay)
                 self.station.disconnect()
                 self.station.sleep()
-                if t is not None:
-                    self._update_rtc_time(t)
-                    self._update_pico_time(t)
-                    return t
+                if t_ntp is not None:
+                    self._update_rtc_time(t_ntp)
+                    self._update_pico_time(t_ntp)
+                    if local:
+                        t_local = self._make_time_local(t_ntp)
+                        print(f"[get_time] NTP: Returning local time: {t_local}")
+                        return t_local
+                    print(f"[get_time] NTP: Returning UTC time: {t_ntp}")
+                    return t_ntp[:8]
 
+        # Try RTC (UTC)
         if self.rtc is not None:
             try:
-                t = self.get_rtc_time(local=local)
-                if t is not None:
-                    self._update_pico_time(t)
-                    return t
+                t_rtc = self.get_rtc_time(local=False)
+                if t_rtc is not None:
+                    self._update_pico_time(t_rtc)
+                    if local:
+                        t_local = self._make_time_local(t_rtc)
+                        print(f"[get_time] RTC: Returning local time: {t_local}")
+                        return t_local
+                    print(f"[get_time] RTC: Returning UTC time: {t_rtc}")
+                    return t_rtc[:8]
             except Exception as e:
                 print(f"[get_time] RTC failed: {e}")
 
+        # Try Pico (UTC)
         try:
-            t = self.get_pico_time(local=local)
-            if t is not None:
-                return t
+            t_pico = self.get_pico_time(local=False)
+            if t_pico is not None:
+                if local:
+                    t_local = self._make_time_local(t_pico)
+                    print(f"[get_time] PICO: Returning local time: {t_local}")
+                    return t_local
+                print(f"[get_time] PICO: Returning UTC time: {t_pico}")
+                return t_pico[:8]
         except Exception as e:
             print(f"[get_time] Unable to get time from Pico: {e}")
             return None
+
+        return None
 
     def get_ntp_time(
         self, local: bool = True, retries: int | None = 5, delay: int = 1
@@ -162,11 +183,9 @@ class TimeHandler:
             print(f"[get_ntp_time] NTP time (UTC): {t}")
             return t[:8]
         # t is in UTC
-        offset = 2 if self._is_dst_poland(t) else 1
-        ts = time.mktime(t) + offset * 3600
-        local_t = time.localtime(ts)
+        local_t = self._make_time_local(t)
         print(f"[get_ntp_time] NTP time (local): {local_t}")
-        return local_t[:8]
+        return local_t
 
     def get_rtc_time(
         self, local: bool = True
@@ -195,11 +214,9 @@ class TimeHandler:
             print(f"[get_rtc_time] RTC time (UTC): {t}")
             return time.localtime(ts)[:8]
 
-        offset = 2 if self._is_dst_poland(time.localtime(ts)) else 1
-        ts += offset * 3600
-        local_t = time.localtime(ts)
+        local_t = self._make_time_local(time.localtime(ts))
         print(f"[get_rtc_time] RTC time (local): {local_t}")
-        return local_t[:8]
+        return local_t
 
     def get_pico_time(
         self, local: bool = True
@@ -221,14 +238,26 @@ class TimeHandler:
             return t[:8]
 
         try:
-            offset = 2 if self._is_dst_poland(t) else 1
-            ts = time.mktime(t) + offset * 3600
-            local_t = time.localtime(ts)
+            local_t = self._make_time_local(t)
             print(f"[get_pico_time] Internal time (local): {local_t}")
-            return local_t[:8]
+            return local_t
         except Exception as e:
             print(f"[get_pico_time] Exception: {e}")
             return None
+
+    def _make_time_local(
+        self, t: tuple[int, int, int, int, int, int, int, int]
+    ) -> tuple[int, int, int, int, int, int, int, int]:
+        """
+        Convert a UTC time tuple to Polish local time (Europe/Warsaw), applying DST if needed.
+        Expects a tuple matching time.localtime():
+            (year, month, mday, hour, minute, second, weekday, yearday)
+        Returns a tuple in the same format, but in local time.
+        """
+        offset = 2 if self._is_dst_poland(t) else 1
+        ts = time.mktime(t) + offset * 3600
+        local_t = time.localtime(ts)
+        return local_t[:8]
 
     def _is_dst_poland(self, t: tuple[int, int, int, int, int, int, int, int]) -> bool:
         """
