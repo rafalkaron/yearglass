@@ -98,9 +98,15 @@ class AccessPoint:
     def render_configuration(self) -> str:
         """Render multiline configuration string to display on epaper."""
         try:
-            config: str = f"""----------------------
-    CONFIGURATION
+            config: str = f"""
+
+
 ----------------------
+  C O N F I G U R E
+      YEARGLASS
+----------------------
+
+
 
 
 1. Connect to WiFi:
@@ -110,6 +116,20 @@ class AccessPoint:
 2. Open 192.168.4.1
 
 3. Follow instructions
+
+
+
+
+
+
+
+
+
+
+----------------------
+----------------------
+
+
 """
             print(config)
             return config
