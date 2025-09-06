@@ -8,7 +8,6 @@ class Webserver:
         self.html_path = "yearglass/index.html"
         self.ssid = None
         self.password = None
-        self.timezone = None
 
     def run(self) -> None:
         """Start the webserver and handle requests until a POST is received."""
@@ -84,9 +83,7 @@ class Webserver:
             if fields.get("wifi-password")
             else ""
         )
-        print(
-            f"Received config: ssid={fields.get('ssid', '')}, wifi-password={pw_log}, timezone={fields.get('timezone', '')}"
-        )
+        print(f"Received config: ssid={fields.get('ssid', '')}, wifi-password={pw_log}")
         html = """
         <html><body><h1>Settings saved!</h1><p>You may now close this page.</p></body></html>
         """
@@ -135,7 +132,6 @@ class Webserver:
     def _update_data(self, fields: dict):
         self.ssid = fields.get("ssid", None)
         self.password = fields.get("wifi-password", None)
-        self.timezone = fields.get("timezone", "0")
 
 
 if __name__ == "__main__":
