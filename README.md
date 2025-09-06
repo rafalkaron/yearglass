@@ -7,14 +7,24 @@ Display year progress in unusual ways on an epaper display.
 Turn Yearglass on and switch between different modes of year progress visualization.
 
 1. Turn Yearglass on.  
-    **Result:** Yearglass initializes and the internal LED turns on. Once completed, the internal LED turns off and the default mode displays.
-2. To change the display mode, use the buttons as follows:
+    **Result:** Yearglass initializes and the internal LED turns on.
+2. If prompted to configure Yearglass:
+   1. Connect a device to Yearglass WiFi.  
+    **Example:** For example connect a smartphone to Yearglass WiFi.
+   2. On the configuration page, provide your home WiFi credentials.
+   3. Select **Apply**.  
+    **Result:** WiFi credentials are persistently saved to Yearglass memory.
+3. Use the buttons as follows:  
+    **TIP:** Buttons do not work while the device is busy (internal LED is on).
 
-    | Button        | Action                        |
-    |---------------|-------------------------------|
-    | Right button  | Display next visualization    |
-    | Left button   | Display previous visualization|
-    | Middle button | Display random visualization  |
+    | Button        | Press time  | Action                         |
+    |---------------|-------------|--------------------------------|
+    | Left button   | Short (<5s) | Display previous visualization |
+    | Middle button | Short (<5s) | Display random visualization   |
+    | Right button  | Short (<5s) | Display next visualization     |
+    | Left button   | Long (≥5s)  | Display previous visualization |
+    | Middle button | Long (≥5s)  | Fetch time to update data      |
+    | Right button  | Long (≥5s)  | Enter Yearglass configuration  |
 
 ### Display modes reference
 
@@ -41,8 +51,6 @@ Yearglass internal LED indicates the following:
 | Blinking every 2s         | Problem with displaying data                  |
 | Blinking every 3s         | Problem with optional hardware initialization |
 
-**NOTE:** In case of hangs, freezes, or infinite loops, Yearglass automatically resets after 25 hours.
-
 ## Development
 
 Build your own Yearglass!
@@ -52,12 +60,13 @@ Build your own Yearglass!
 Yearglass is coded with power-efficiency in mind.
 
 1. Flash the latest MicroPython onto the Raspberry Pi Pico W(H).
-2. (optional) To obtain time from WiFi, create a `config.py` file in the root directory of the project:  
+2. (optional) To skip Yearglass initial configuration, create a `config.py` file in the root directory of the project:  
 
     ```python
     WIFI_SSID = "WiFiNetworkName"
     WIFI_PASSWORD = "WiFiPassword"
     ```
+
 3. Upload the necessary files from this repository to Raspberry Pi Pico W(H).
 
 ### Components reference
