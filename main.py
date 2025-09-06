@@ -24,6 +24,17 @@ class Yearglass:
         utime.sleep(2)
 
         # Hardware
+        self.led = Led("LED")
+        self.epd = EPaper()
+        self.buttons = Buttons(
+            key1_pin=15,
+            key2_pin=17,
+            key3_pin=2,
+            on_key1=self.display_next_mode,
+            on_key2=self.display_random_mode,
+            on_key3=self.display_previous_mode,
+        )
+
         if WIFI_SSID is not None and WIFI_PASSWORD is not None:
             self.sta = Station(WIFI_SSID, WIFI_PASSWORD)
         else:
@@ -35,16 +46,7 @@ class Yearglass:
             except Exception as e:
                 print(f"Unable to complete configuration: {e}")
                 self.sta = None
-        self.led = Led("LED")
-        self.epd = EPaper()
-        self.buttons = Buttons(
-            key1_pin=15,
-            key2_pin=17,
-            key3_pin=2,
-            on_key1=self.display_next_mode,
-            on_key2=self.display_random_mode,
-            on_key3=self.display_previous_mode,
-        )
+
         try:
             self.rtc = Rtc()
         except Exception as e:
