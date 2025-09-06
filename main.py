@@ -83,6 +83,8 @@ class Yearglass:
         print(config)
         self.epd.display_text_rows(config)
         self.webserver.run()
+        if self.webserver.ssid is not None and self.webserver.password is not None:
+            self.sta = Station(self.webserver.ssid, self.webserver.password)
         self.buttons.enable_interrupts()
         self.led.off()
 
