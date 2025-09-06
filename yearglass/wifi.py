@@ -72,7 +72,7 @@ class Station:
 
 
 class AccessPoint:
-    def __init__(self, essid: str = "yearglass", password: str = "yg-okon") -> None:
+    def __init__(self, essid: str = "yearglass", password: str = "yg-okon1") -> None:
         self.essid: str = essid
         self.password: str = password
         self.ap: None | network.AP_IF = None
