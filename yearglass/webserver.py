@@ -1,4 +1,3 @@
-import os
 import socket
 
 import uasyncio as asyncio  # type: ignore
@@ -8,7 +7,7 @@ class Webserver:
     def __init__(self, host: str = "0.0.0.0", port: int = 80):
         self.host = host
         self.port = port
-        self.html_path = os.path.join(os.path.dirname(__file__), "configuration.html")
+        self.html_path = "yearglass/index.hml"
 
         self.ssid: str | None = None
         self.password: str | None = None
@@ -74,7 +73,7 @@ class Webserver:
             with open(self.html_path, "r") as f:
                 return f.read()
         except Exception as e:
-            return f"<h1>Error loading configuration page: {e}</h1>"
+            return f"<h1>Error loading page: {e}</h1>"
 
     def _parse_data(self, data: str) -> dict:
         result = {}
