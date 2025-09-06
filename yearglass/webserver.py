@@ -33,17 +33,47 @@ class Webserver:
     def handle_request(self, conn: socket.socket) -> bool:
         """Handle a single HTTP request. Returns True if server should stop (after POST)."""
         try:
-            request = conn.recv(2048)
+            request = b""
+            while True:
+                chunk = conn.recv(2048)
+                if not chunk:
+                    break
+                request += chunk
+                if b"\r\n\r\n" in request:
+                    break
             if not request:
                 conn.close()
                 return False
-            request = request.decode("utf-8")
-            method, _, *_ = request.split(" ", 2)
+            request_str = request.decode("utf-8")
+            method, _, *_ = request_str.split(" ", 2)
             if method == "GET":
                 self._handle_get(conn)
                 return False
             elif method == "POST":
-                self._handle_post(conn, request)
+                # Parse headers to get Content-Length
+                headers, _, rest = request_str.partition("\r\n\r\n")
+                content_length = 0
+                for line in headers.split("\r\n"):
+                    if line.lower().startswith("content-length:"):
+                        try:
+                            content_length = int(line.split(":", 1)[1].strip())
+                        except Exception:
+                            content_length = 0
+                        break
+                body = rest.encode("utf-8")
+                # If not all body bytes received, read the rest
+                to_read = content_length - len(body)
+                while to_read > 0:
+                    chunk = conn.recv(to_read)
+                    if not chunk:
+                        break
+                    body += chunk
+                    to_read -= len(chunk)
+                # Now handle POST with full request (headers + body)
+                full_request = (
+                    headers + "\r\n\r\n" + body.decode("utf-8", errors="ignore")
+                )
+                self._handle_post(conn, full_request)
                 return True
             else:
                 self._send_response(
