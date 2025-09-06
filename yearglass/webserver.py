@@ -98,9 +98,7 @@ class Webserver:
     def _handle_post(self, conn: socket.socket, request: str) -> None:
         """Handle form submission, validate, update, and respond."""
         body = request.split("\r\n\r\n", 1)[-1]
-        print(f"DEBUG RAW BODY: {repr(body)}")
         fields = self._parse_data(body)
-        print(f"DEBUG FIELDS: {fields}")
         if not self._validate_fields(fields):
             self._send_response(
                 conn, "400 Bad Request", "text/html", "<h1>Invalid input</h1>"
