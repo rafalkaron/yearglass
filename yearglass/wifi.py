@@ -72,9 +72,7 @@ class Station:
 
 
 class AccessPoint:
-    def __init__(
-        self, essid: str = "yearglass", password: str = "yearglass-okoń"
-    ) -> None:
+    def __init__(self, essid: str = "yearglass", password: str = "yg-okon") -> None:
         self.essid: str = essid
         self.password: str = password
         self.ap: None | network.AP_IF = None
@@ -101,11 +99,11 @@ class AccessPoint:
         """Render multiline configuration string to display on epaper."""
         try:
             return f"""Configuration
-1. Connect to Yearglass WiFi:
+1. Connect to WiFi:
    SSID: {self.essid}
    PASS: {self.password}
-2. Open http://192.168.4.1
-3. Follow instructions.
+2. Open 192.168.4.1
+3. Follow instructions
 """
         except Exception as e:
             print(f"Unable to render dynamic configuration screen: {e}")
