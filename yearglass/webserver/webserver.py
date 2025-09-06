@@ -1,6 +1,8 @@
 import os
 import socket
 
+import utime as time  # type: ignore
+
 
 class Webserver:
     def __init__(self, host: str = "0.0.0.0", port: int = 80):
@@ -100,6 +102,7 @@ class Webserver:
 
     def _handle_post(self, conn: socket.socket, request: str) -> None:
         """Handle form submission, validate, update, and respond."""
+
         body = request.split("\r\n\r\n", 1)[-1]
         fields = self._parse_data(body)
         if not self._validate_fields(fields):
@@ -117,6 +120,8 @@ class Webserver:
         print(f"Received config: ssid={fields.get('ssid', '')}, wifi-password={pw_log}")
         html = self._read_html(self.html_applied)
         self._send_response(conn, "200 OK", "text/html", html)
+        # Give the client time to receive the response before closing
+        time.sleep(1)
 
     def _send_response(
         self, conn: socket.socket, status: str, content_type: str, body: str
