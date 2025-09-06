@@ -33,7 +33,7 @@ class Webserver:
             if not request:
                 conn.close()
                 return
-            request = request.decode("utf-8", errors="ignore")
+            request = request.decode("utf-8")
             method, _, *_ = request.split(" ", 2)
             if method == "GET":
                 html = self._read_html()
