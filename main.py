@@ -23,7 +23,12 @@ class Yearglass:
         # Startup delay for power stability
         utime.sleep(2)
 
-        # Hardware
+        # Config
+        self.webserver = Webserver()
+        self.ap = AccessPoint()
+        self.sta = None
+
+        # HMI
         self.led = Led("LED")
         self.epd = EPaper()
         self.buttons = Buttons(
@@ -31,22 +36,23 @@ class Yearglass:
             key2_pin=17,
             key3_pin=2,
             on_key1=self.display_next_mode,
+            on_key1_long=self.update_data,
             on_key2=self.display_random_mode,
+            on_key2_long=self.display_refresh_current_mode,
             on_key3=self.display_previous_mode,
+            on_key3_long=self.display_configuration,
         )
 
+        # WiFi
         if WIFI_SSID is not None and WIFI_PASSWORD is not None:
             self.sta = Station(WIFI_SSID, WIFI_PASSWORD)
         else:
             try:
-                self.sta = None
-                self.ap = AccessPoint()
-                self.webserver = Webserver()
                 self.display_configuration()
             except Exception as e:
                 print(f"Unable to complete configuration: {e}")
-                self.sta = None
 
+        # RTC
         try:
             self.rtc = Rtc()
         except Exception as e:
@@ -80,11 +86,13 @@ class Yearglass:
         self.buttons.disable_interrupts()
         self.ap.start()
         config: str = self.ap.render_configuration()
-        print(config)
         self.epd.display_text_rows(config)
         self.webserver.run()
         if self.webserver.ssid is not None and self.webserver.password is not None:
             self.sta = Station(self.webserver.ssid, self.webserver.password)
+        else:
+            self.sta = None
+        self.ap.stop()
         self.buttons.enable_interrupts()
         self.led.off()
 

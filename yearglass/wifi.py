@@ -98,7 +98,7 @@ class AccessPoint:
     def render_configuration(self) -> str:
         """Render multiline configuration string to display on epaper."""
         try:
-            return f"""----------------------
+            config: str = f"""----------------------
     CONFIGURATION
 ----------------------
 
@@ -111,7 +111,11 @@ class AccessPoint:
 
 3. Follow instructions
 """
+            print(config)
+            return config
         except Exception as e:
             print(f"Unable to render dynamic configuration screen: {e}")
-            return """Configuration
+            config: str = """Configuration
 See Yearglass docs."""
+            print(config)
+            return config
