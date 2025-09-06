@@ -78,6 +78,7 @@ class Yearglass:
         """Display configuration screen to prompt user to open web interface."""
         self.led.on()
         self.buttons.disable_interrupts()
+        self.ap.start()
         config: str = self.ap.render_configuration()
         print(config)
         self.epd.display_text_rows(config)
