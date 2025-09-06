@@ -17,12 +17,11 @@ class Webserver:
         s.listen(1)
         print(f"Webserver running on http://{self.host}:{self.port}")
         try:
-            while True:
-                try:
-                    conn, _ = s.accept()
-                    self.handle_request(conn)
-                except Exception as e:
-                    print(f"Webserver accept error: {e}")
+            try:
+                conn, _ = s.accept()
+                self.handle_request(conn)
+            except Exception as e:
+                print(f"Webserver accept error: {e}")
         except Exception as e:
             print(f"Webserver error: {e}")
         finally:
