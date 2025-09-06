@@ -69,3 +69,30 @@ class Station:
             self.sta.active(False)
         else:
             print("WiFi module not initialized.")
+
+
+class AccessPoint:
+    def __init__(
+        self, essid: str = "yearglass", password: str = "yearglass-okoń"
+    ) -> None:
+        self.essid: str = essid
+        self.password: str = password
+        self.ap: None | network.AP_IF = None
+
+    def start(self) -> None:
+        try:
+            self.ap = network.WLAN(network.AP_IF)
+            if self.ap is not None:
+                self.ap.config(essid=self.essid, password=self.password)
+                self.ap.active(True)
+                print("Yearglass IP address:", self.ap.ifconfig()[0])
+        except Exception as e:
+            print(f"Unable to start access point: {e}")
+
+    def stop(self) -> None:
+        if self.ap is not None:
+            try:
+                self.ap.active(False)
+                print("Stopped Access Point...")
+            except Exception as e:
+                print(f"Unable to stop Access Point: {e}")
