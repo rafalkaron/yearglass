@@ -70,8 +70,14 @@ class Webserver:
     def _handle_post(self, conn: socket.socket, request: str) -> None:
         """Handle form submission, validate, update, and respond."""
         body = request.split("\r\n\r\n", 1)[-1]
+        print(f"DEBUG RAW BODY: {repr(body)}")
         fields = self._parse_data(body)
-        print(f"DEBUG: {fields}")
+        print(f"DEBUG FIELDS: {fields}")
+        if not self._validate_fields(fields):
+            self._send_response(
+                conn, "400 Bad Request", "text/html", "<h1>Invalid input</h1>"
+            )
+            return
         self._update_data(fields)
         # Mask password in log
         pw_log = (
@@ -99,6 +105,13 @@ class Webserver:
         )
         conn.sendall(headers.encode() + body_bytes)
 
+    def _validate_fields(self, fields: dict) -> bool:
+        """Validate POSTed form fields."""
+        ssid = fields.get("ssid", "")
+        password = fields.get("wifi-password", "")
+        # Basic validation: non-empty
+        return bool(ssid and password)
+
     def _read_html(self) -> str:
         try:
             with open(self.html_path, "r") as f:
@@ -109,14 +122,35 @@ class Webserver:
     def _parse_data(self, data: str) -> dict:
         result = {}
         try:
-            pairs = data.split("&")
+            pairs = data.strip().split("&")
             for pair in pairs:
                 if "=" in pair:
                     k, v = pair.split("=", 1)
-                    result[k] = v.replace("+", " ")
+                    # Replace + with space, then percent-decode
+                    k = k.replace("+", " ")
+                    v = v.replace("+", " ")
+                    k = self._percent_decode(k)
+                    v = self._percent_decode(v)
+                    result[k] = v
         except Exception:
             pass
         return result
+
+    def _percent_decode(self, s: str) -> str:
+        res = ""
+        i = 0
+        while i < len(s):
+            if s[i] == "%" and i + 2 < len(s):
+                try:
+                    res += chr(int(s[i + 1 : i + 3], 16))
+                    i += 3
+                except Exception:
+                    res += s[i]
+                    i += 1
+            else:
+                res += s[i]
+                i += 1
+        return res
 
     def _update_data(self, fields: dict):
         self.ssid = fields.get("ssid", None)
