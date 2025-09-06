@@ -107,11 +107,9 @@ class AccessPoint:
 
 
 ----------------------
-  C O N F I G U R E
+  C O N F I G U R E  
       YEARGLASS
 ----------------------
-
-
 
 
 1. Connect to WiFi:
@@ -124,11 +122,13 @@ class AccessPoint:
 
 
 
-
-
-
-
-
+       ........
+        ......
+         ....
+          ..
+         ....
+        ......
+       ........
 
 
 ----------------------
