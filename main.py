@@ -71,7 +71,7 @@ class Yearglass:
             self.sta = Station(WIFI_SSID, WIFI_PASSWORD)
         else:
             try:
-                self.display_configuration()
+                self.display_configuration(initial=True)
             except Exception as e:
                 print(f"[Yearglass] Unable to complete configuration: {e}")
 
@@ -84,7 +84,7 @@ class Yearglass:
             self.led.blink_on(3)
             self.rtc = None
 
-    def display_configuration(self) -> None:
+    def display_configuration(self, initial: bool = False) -> None:
         """Display configuration screen to prompt user to open web interface."""
         self.led.on()
         self.buttons.disable_interrupts()
@@ -102,6 +102,8 @@ class Yearglass:
         self.time_handler = TimeHandler(station=self.sta, rtc=self.rtc)
         self.buttons.enable_interrupts()
         self.led.off()
+        if not initial:
+            self.display_refresh_current_mode()
 
     def display_mode(self, mode: str) -> None:
         """Display year progress mode based on string provided."""
