@@ -71,11 +71,7 @@ class Webserver:
         """Handle form submission, validate, update, and respond."""
         body = request.split("\r\n\r\n", 1)[-1]
         fields = self._parse_data(body)
-        if not self._validate_fields(fields):
-            self._send_response(
-                conn, "400 Bad Request", "text/html", "<h1>Invalid input</h1>"
-            )
-            return
+        print(f"DEBUG: {fields}")
         self._update_data(fields)
         # Mask password in log
         pw_log = (
@@ -102,13 +98,6 @@ class Webserver:
             f"\r\n"
         )
         conn.sendall(headers.encode() + body_bytes)
-
-    def _validate_fields(self, fields: dict) -> bool:
-        """Validate POSTed form fields."""
-        ssid = fields.get("ssid", "")
-        password = fields.get("wifi-password", "")
-        # Basic validation: non-empty
-        return bool(ssid and password)
 
     def _read_html(self) -> str:
         try:
