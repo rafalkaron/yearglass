@@ -10,25 +10,13 @@ from yearglass.time_visualizer import TimeVisualizer
 from yearglass.webserver import Webserver
 from yearglass.wifi import AccessPoint, Station
 
-try:
-    from config import WIFI_PASSWORD, WIFI_SSID  # type: ignore
-
-except ImportError:
-    WIFI_PASSWORD = None
-    WIFI_SSID = None
-
 
 class Yearglass:
     def __init__(self) -> None:
         # Startup delay for power stability
         utime.sleep(2)
 
-        # Config
-        self.webserver = Webserver()
-        self.ap = AccessPoint()
-        self.sta = None
-
-        # HMI
+        # Hardware initialization
         self.led = Led("LED")
         self.epd = EPaper()
         self.buttons = Buttons(
@@ -43,31 +31,21 @@ class Yearglass:
             on_key3_long=self.display_configuration,
         )
 
-        # WiFi
-        if WIFI_SSID is not None and WIFI_PASSWORD is not None:
-            self.sta = Station(WIFI_SSID, WIFI_PASSWORD)
-        else:
-            try:
-                self.display_configuration()
-            except Exception as e:
-                print(f"Unable to complete configuration: {e}")
+        # Hardware configuration
+        self.webserver = Webserver()
+        self.ap = AccessPoint()
+        self.sta = None
+        self._configure_wifi()
+        self._configure_rtc()
 
-        # RTC
-        try:
-            self.rtc = Rtc()
-        except Exception as e:
-            print(f"[Yearglass] Could not initialize Rtc: {e}")
-            self.led.blink_on(3)
-            self.rtc = None
-
-        # Handlers
+        # Handlers initialization
         self.time_handler = TimeHandler(station=self.sta, rtc=self.rtc)
         self.time_visualizer = TimeVisualizer(
             max_cols=self.epd.max_columns,
             max_rows=self.epd.max_rows,
         )
 
-        # Data
+        # Data initialization
         self.days_elapsed: int = 0
         self.days_total: int = 0
         self.display_modes = [
@@ -80,16 +58,44 @@ class Yearglass:
         self.seconds_till_midnight: int = 1
         self.current_display_mode: str = "crossout"
 
+    def _configure_wifi(self) -> None:
+        """Configure WiFi with credentials from config.py.
+        If config.py does not exit, run prompt user for credentials."""
+        try:
+            from config import WIFI_PASSWORD, WIFI_SSID  # type: ignore
+        except ImportError:
+            WIFI_PASSWORD = None
+            WIFI_SSID = None
+
+        if WIFI_SSID is not None and WIFI_PASSWORD is not None:
+            self.sta = Station(WIFI_SSID, WIFI_PASSWORD)
+        else:
+            try:
+                self.display_configuration()
+            except Exception as e:
+                print(f"[Yearglass] Unable to complete configuration: {e}")
+
+    def _configure_rtc(self) -> None:
+        """Configure RTC module if present."""
+        try:
+            self.rtc = Rtc()
+        except Exception as e:
+            print(f"[Yearglass] Could not initialize RTC: {e}")
+            self.led.blink_on(3)
+            self.rtc = None
+
     def display_configuration(self) -> None:
         """Display configuration screen to prompt user to open web interface."""
         self.led.on()
         self.buttons.disable_interrupts()
         self.ap.start()
-        config: str = self.ap.render_configuration()
-        self.epd.display_text_rows(config)
+        self.epd.display_text_rows(self.ap.render_configuration())
         self.webserver.run()
-        if self.webserver.ssid is not None and self.webserver.password is not None:
-            self.sta = Station(self.webserver.ssid, self.webserver.password)
+        if (
+            self.webserver.wifi_ssid is not None
+            and self.webserver.wifi_password is not None
+        ):
+            self.sta = Station(self.webserver.wifi_ssid, self.webserver.wifi_password)
         else:
             self.sta = None
         self.ap.stop()
@@ -98,6 +104,7 @@ class Yearglass:
         self.led.off()
 
     def display_mode(self, mode: str) -> None:
+        """Display year progress mode based on string provided."""
         try:
             # NOTE: display mode methods must be named render_<mode>
             print(f"[display_{mode}] Displaying {mode} progress...")
@@ -121,6 +128,7 @@ class Yearglass:
             print(f"[display_mode] Could not change display mode: {e}")
 
     def display_next_mode(self):
+        """Display next year progress mode."""
         try:
             self.led.on()
             idx = (
@@ -136,6 +144,7 @@ class Yearglass:
             print(f"[display_next_mode] Could not display next mode: {e}")
 
     def display_previous_mode(self):
+        """Display previous year progress mode."""
         try:
             self.led.on()
             idx = (
@@ -151,6 +160,7 @@ class Yearglass:
             print(f"[display_next_mode] Could not display previous mode: {e}")
 
     def display_random_mode(self):
+        """Display random year progress mode."""
         try:
             self.led.on()
             if self.current_display_mode in self.display_modes:
@@ -172,6 +182,7 @@ class Yearglass:
             print(f"[display_random_mode] Could not display random mode: {e}")
 
     def display_refresh_current_mode(self):
+        """Refresh current year progress mode. It is needed to display updated data."""
         try:
             self.led.on()
             if self.current_display_mode in self.display_modes:
@@ -188,6 +199,7 @@ class Yearglass:
             print(f"[display_refresh_current_mode] Could not refresh current mode {e}")
 
     def update_data(self):
+        """Fetch time to update elapsed days and totay days this year."""
         try:
 
             def fetch_time():

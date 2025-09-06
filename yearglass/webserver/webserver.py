@@ -6,10 +6,11 @@ class Webserver:
     def __init__(self, host: str = "0.0.0.0", port: int = 80):
         self.host = host
         self.port = port
-        self.html_index = "yearglass/webserver/index.html"
-        self.html_applied = "yearglass/webserver/applied.html"
-        self.ssid = None
-        self.password = None
+        self.html_index: str = "yearglass/webserver/index.html"
+        self.html_applied: str = "yearglass/webserver/applied.html"
+        self.config: str = "config.py"
+        self.wifi_ssid: str | None = None
+        self.wifi_password: str | None = None
 
     def run(self) -> None:
         """Start the webserver and handle requests until a POST is received."""
@@ -94,7 +95,7 @@ class Webserver:
 
     def _handle_get(self, conn: socket.socket) -> None:
         """Serve the configuration HTML page."""
-        html = self._read_html()
+        html = self._read_html(self.html_index)
         self._send_response(conn, "200 OK", "text/html", html)
 
     def _handle_post(self, conn: socket.socket, request: str) -> None:
@@ -114,9 +115,7 @@ class Webserver:
             else ""
         )
         print(f"Received config: ssid={fields.get('ssid', '')}, wifi-password={pw_log}")
-        html = """
-        <html><body><h1>Settings saved!</h1><p>You may now close this page.</p></body></html>
-        """
+        html = self._read_html(self.html_applied)
         self._send_response(conn, "200 OK", "text/html", html)
 
     def _send_response(
@@ -140,14 +139,23 @@ class Webserver:
         # Basic validation: non-empty
         return bool(ssid and password)
 
-    def _read_html(self) -> str:
+    def _read_html(self, html_path: str) -> str:
         try:
-            with open(self.html_index, "r") as f:
+            with open(html_path, "r") as f:
                 return f.read()
         except Exception as e:
             return f"<h1>Error loading page: {e}</h1>"
 
     def _parse_data(self, data: str) -> dict:
+        """
+        Parse URL-encoded form data into a dictionary.
+
+        Args:
+            data: The URL-encoded string from the POST body.
+
+        Returns:
+            A dictionary mapping form field names to their decoded values.
+        """
         result = {}
         try:
             pairs = data.strip().split("&")
@@ -165,6 +173,15 @@ class Webserver:
         return result
 
     def _percent_decode(self, s: str) -> str:
+        """
+        Decode percent-encoded characters in a string (e.g., 'abc%20def' -> 'abc def').
+
+        Args:
+            s: The percent-encoded string.
+
+        Returns:
+            The decoded string with percent-encoded sequences replaced by their character equivalents.
+        """
         res = ""
         i = 0
         while i < len(s):
@@ -181,31 +198,22 @@ class Webserver:
         return res
 
     def _update_data(self, fields: dict):
-        self.ssid = fields.get("ssid", None)
-        self.password = fields.get("wifi-password", None)
+        """Update webserver attributes and config file."""
+        self.wifi_ssid = fields.get("ssid", None)
+        self.wifi_password = fields.get("wifi-password", None)
 
-        config_path = "config.py"
         config_content = (
-            f"WIFI_SSID = '{self.ssid}'\nWIFI_PASSWORD = '{self.password}'\n"
+            f"WIFI_SSID = '{self.wifi_ssid}'\nWIFI_PASSWORD = '{self.wifi_password}'\n"
         )
         try:
             try:
-                os.stat(config_path)
-                # File exists, overwrite
-                with open(config_path, "w") as f:
+                os.stat(self.config)
+                with open(self.config, "w") as f:
                     f.write(config_content)
-                    print("Updated config file.")
+                    print("[_update_data] Updated config file.")
             except OSError:
-                # File does not exist, create
-                with open(config_path, "w") as f:
+                with open(self.config, "w") as f:
                     f.write(config_content)
-                    print("Created new config file.")
+                    print("[_update_data] Created new config file.")
         except Exception as e:
             print(f"Failed to save config: {e}")
-
-
-if __name__ == "__main__":
-    try:
-        Webserver().run()
-    except (KeyboardInterrupt, Exception) as e:
-        print(f"Server stopped: {e}")
