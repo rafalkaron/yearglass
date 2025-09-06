@@ -70,9 +70,7 @@ class Webserver:
                     body += chunk
                     to_read -= len(chunk)
                 # Now handle POST with full request (headers + body)
-                full_request = (
-                    headers + "\r\n\r\n" + body.decode("utf-8", errors="ignore")
-                )
+                full_request = headers + "\r\n\r\n" + body.decode("utf-8")
                 self._handle_post(conn, full_request)
                 return True
             else:
