@@ -57,7 +57,7 @@ class TimeHandler:
             if t is None:
                 t = self.get_pico_time(local=True)
             if t is None:
-                fallback_time = 60
+                fallback_time = 3600
                 print(
                     f"[get_seconds_till_midnight] Pico internal time failed, returning fallback {fallback_time} seconds."
                 )
@@ -67,20 +67,20 @@ class TimeHandler:
                 (24 - hour - 1) * 3600 + (60 - minute - 1) * 60 + (60 - second)
             )
             if seconds_till_midnight < 0:
-                fallback_time = 60
+                fallback_time = 3600
                 print(
                     f"[get_seconds_till_midnight] {fallback_time} seconds until midnight..."
                 )
                 return fallback_time
             else:
-                # Add 60 seconds buffer to ensure refresh happens after midnight, compensating for possible Pico drift
+                # Add 60 seconds buffer to ensure refresh happens after midnight, compensating for possible drift
                 drift_compensated_time: int = seconds_till_midnight + 60
                 print(
                     f"[get_seconds_till_midnight] {drift_compensated_time} seconds until midnight..."
                 )
                 return drift_compensated_time
         except Exception as e:
-            fallback_time = 60
+            fallback_time = 3600
             print(
                 f"[get_seconds_till_midnight] Exception: {e}. Returning fallback {fallback_time} seconds."
             )
