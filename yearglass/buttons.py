@@ -4,7 +4,17 @@ from machine import Pin  # type: ignore
 
 class Buttons:
     def __init__(
-        self, key1_pin: int, key2_pin: int, key3_pin: int, on_key1, on_key2, on_key3
+        self,
+        key1_pin: int,
+        key2_pin: int,
+        key3_pin: int,
+        on_key1,
+        on_key2,
+        on_key3,
+        on_key1_long=None,
+        on_key2_long=None,
+        on_key3_long=None,
+        long_press_ms: int = 5000,
     ) -> None:
         self.key1 = Pin(key1_pin, Pin.IN, Pin.PULL_UP)
         self.key2 = Pin(key2_pin, Pin.IN, Pin.PULL_UP)
@@ -12,6 +22,10 @@ class Buttons:
         self.on_key1 = on_key1
         self.on_key2 = on_key2
         self.on_key3 = on_key3
+        self.on_key1_long = on_key1_long
+        self.on_key2_long = on_key2_long
+        self.on_key3_long = on_key3_long
+        self.long_press_ms = long_press_ms
 
         # Set up interrupts for falling edge (button press)
         self.key1.irq(trigger=Pin.IRQ_FALLING, handler=self._handle_key1)
@@ -32,23 +46,29 @@ class Buttons:
         utime.sleep_ms(20)  # debounce
         if pin.value() == 0:
             print("[handle_buttons] KEY1 pressed (IRQ)")
-            self.on_key1()
-            self.wait_release(pin)
+            self._handle_press(pin, self.on_key1, self.on_key1_long, "KEY1")
 
     def _handle_key2(self, pin):
         utime.sleep_ms(20)
         if pin.value() == 0:
             print("[handle_buttons] KEY2 pressed (IRQ)")
-            self.on_key2()
-            self.wait_release(pin)
+            self._handle_press(pin, self.on_key2, self.on_key2_long, "KEY2")
 
     def _handle_key3(self, pin):
         utime.sleep_ms(20)
         if pin.value() == 0:
             print("[handle_buttons] KEY3 pressed (IRQ)")
-            self.on_key3()
-            self.wait_release(pin)
+            self._handle_press(pin, self.on_key3, self.on_key3_long, "KEY3")
 
-    def wait_release(self, pin: Pin) -> None:
+    def _handle_press(self, pin: Pin, short_cb, long_cb, key_name: str) -> None:
+        press_time = utime.ticks_ms()
         while pin.value() == 0:
             utime.sleep_ms(10)
+        release_time = utime.ticks_ms()
+        duration = utime.ticks_diff(release_time, press_time)
+        if duration >= self.long_press_ms and long_cb:
+            print(f"[handle_buttons] {key_name} long-press detected ({duration} ms)")
+            long_cb()
+        else:
+            print(f"[handle_buttons] {key_name} short-press detected ({duration} ms)")
+            short_cb()
