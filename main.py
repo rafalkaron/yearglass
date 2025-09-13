@@ -1,3 +1,4 @@
+import machine  # type: ignore
 import urandom  # type: ignore
 import utime  # type: ignore
 
@@ -230,7 +231,10 @@ def main():
         while True:
             yearglass.update_data()
             yearglass.display_refresh_current_mode()
-            utime.sleep(yearglass.time_handler.get_seconds_till_midnight())
+            s_till_midnight: int = yearglass.time_handler.get_seconds_till_midnight()
+            ms_till_midnight: int = int(s_till_midnight * 1000)
+            print(f"[main] Entering deep sleep for {s_till_midnight} s")
+            machine.deepsleep(ms_till_midnight)
     except Exception as e:
         try:
             yearglass.led.blink_on(0.5)
