@@ -224,6 +224,17 @@ class Yearglass:
             self.led.blink_on(1)
             print(f"[update_data] Failed to update data: {e}")
 
+    @staticmethod
+    def safe_deepsleep(total_ms: int, max_ms: int = 1800000) -> None:
+        """Sleep for total_ms milliseconds, splitting into chunks of max_ms (default 30 min)."""
+        remaining = total_ms
+        while remaining > 0:
+            chunk = min(remaining, max_ms)
+            print(f"[safe_deepsleep] Deep sleeping for {chunk // 1000} s")
+            machine.deepsleep(chunk)
+            # After waking, the board resets, so this loop will only run once per boot
+            # The rest of the sleep will be handled on subsequent boots
+
 
 def main():
     try:
@@ -234,7 +245,7 @@ def main():
             s_till_midnight: int = yearglass.time_handler.get_seconds_till_midnight()
             ms_till_midnight: int = int(s_till_midnight * 1000)
             print(f"[main] Entering deep sleep for {s_till_midnight} s")
-            machine.deepsleep(ms_till_midnight)
+            yearglass.safe_deepsleep(ms_till_midnight)
     except Exception as e:
         try:
             yearglass.led.blink_on(0.5)
