@@ -230,10 +230,9 @@ class Yearglass:
         remaining = total_ms
         while remaining > 0:
             chunk = min(remaining, max_ms)
-            print(f"[safe_lightsleep] Deep sleeping for {chunk // 1000} s")
+            print(f"[safe_lightsleep] Light sleeping for {chunk // 1000} s")
             machine.lightsleep(chunk)
-            # After waking, the board resets, so this loop will only run once per boot
-            # The rest of the sleep will be handled on subsequent boots
+            remaining -= chunk
 
 
 def main():
