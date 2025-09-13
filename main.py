@@ -245,7 +245,7 @@ def main():
             s_till_midnight: int = yearglass.time_handler.get_seconds_till_midnight()
             ms_till_midnight: int = int(s_till_midnight * 1000)
             print(f"[main] Entering deep sleep for {s_till_midnight} s")
-            yearglass.safe_deepsleep(ms_till_midnight)
+            machine.lightsleep(ms_till_midnight)
     except Exception as e:
         try:
             yearglass.led.blink_on(0.5)
