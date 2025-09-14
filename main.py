@@ -224,6 +224,14 @@ class Yearglass:
             self.led.blink_on(1)
             print(f"[update_data] Failed to update data: {e}")
 
+    def safesleep(self) -> None:
+        s_till_midnight: int = self.time_handler.get_seconds_till_midnight()
+        ms_till_midnight: int = int(s_till_midnight * 1000)
+        max_lightsleep_ms: int = 3600000  # 1 hour
+        ms_sleep: int = min(ms_till_midnight, max_lightsleep_ms)
+        print(f"[safesleep] Entering deep sleep for {s_till_midnight} s")
+        machine.lightsleep(ms_sleep)
+
 
 def main():
     try:
@@ -231,11 +239,8 @@ def main():
         while True:
             yearglass.update_data()
             yearglass.display_refresh_current_mode()
-            s_till_midnight: int = yearglass.time_handler.get_seconds_till_midnight()
-            ms_till_midnight: int = int(s_till_midnight * 1000)
-            max_lightsleep_ms: int = 3600000  # 1 hour
-            print(f"[main] Entering deep sleep for {s_till_midnight} s")
-            machine.lightsleep(max(ms_till_midnight, max_lightsleep_ms))
+            yearglass.safesleep()
+
     except Exception as e:
         try:
             yearglass.led.blink_on(0.5)
