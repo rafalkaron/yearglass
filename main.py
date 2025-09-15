@@ -245,6 +245,7 @@ class Yearglass:
                 f"[safesleep] Entering lightsleep for {ms_sleep // 1000} s (till midnight: {s_left} s)"
             )
             self.led.off()
+            utime.sleep(0.25)  # Add buffer before going to ligtsleep
             machine.lightsleep(ms_sleep)
             new_s_left: int = self.time_handler.get_seconds_till_midnight()
             if new_s_left > s_left:
