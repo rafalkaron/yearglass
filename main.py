@@ -229,6 +229,7 @@ class Yearglass:
         Sleeps for up to 1 hour at a time, recursively calling itself after waking up
         if there is still time left until midnight. Skips sleep if no time remains.
         """
+        self.led.on()
         s_till_midnight: int = self.time_handler.get_seconds_till_midnight()
         ms_till_midnight: int = int(s_till_midnight * 1000)
         max_lightsleep_ms: int = 3600000  # 1 hour
@@ -239,6 +240,7 @@ class Yearglass:
         print(
             f"[safesleep] Entering lightsleep for {ms_sleep // 1000} s (till midnight: {s_till_midnight} s)"
         )
+        self.led.off()
         machine.lightsleep(ms_sleep)
         # After waking up, check if there is still time left and sleep again if needed
         s_left: int = self.time_handler.get_seconds_till_midnight()
