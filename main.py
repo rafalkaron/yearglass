@@ -7,6 +7,7 @@ from yearglass.led import Led
 from yearglass.rtc import Rtc
 from yearglass.time_handler import TimeHandler
 from yearglass.time_visualizer import TimeVisualizer
+from yearglass.usbprint import usbprint
 from yearglass.webserver import Webserver
 from yearglass.wifi import AccessPoint, Station
 
@@ -55,7 +56,6 @@ class Yearglass:
             "spiral",
             "piechart",
         ]
-        self.seconds_till_midnight: int = 1
         self.current_display_mode: str = "crossout"
 
     def _configure_wifi(self) -> None:
@@ -73,14 +73,14 @@ class Yearglass:
             try:
                 self.display_configuration(initial=True)
             except Exception as e:
-                print(f"[Yearglass] Unable to complete configuration: {e}")
+                usbprint(f"[Yearglass] Unable to complete configuration: {e}")
 
     def _configure_rtc(self) -> None:
         """Configure RTC module if present."""
         try:
             self.rtc = Rtc()
         except Exception as e:
-            print(f"[Yearglass] Could not initialize RTC: {e}")
+            usbprint(f"[Yearglass] Could not initialize RTC: {e}")
             self.led.blink_on(3)
             self.rtc = None
 
@@ -109,7 +109,7 @@ class Yearglass:
         """Display year progress mode based on string provided."""
         try:
             # NOTE: display mode methods must be named render_<mode>
-            print(f"[display_{mode}] Displaying {mode} progress...")
+            usbprint(f"[display_{mode}] Displaying {mode} progress...")
             self.led.on()
             self.buttons.disable_interrupts()
             self.current_display_mode = mode
@@ -122,12 +122,12 @@ class Yearglass:
                 )
                 self.epd.display_text_rows(result)
             else:
-                print(f"[display_mode] Unknown mode: {mode}")
+                usbprint(f"[display_mode] Unknown mode: {mode}")
             self.buttons.enable_interrupts()
             self.led.off()
         except Exception as e:
             self.led.blink_on(2)
-            print(f"[display_mode] Could not change display mode: {e}")
+            usbprint(f"[display_mode] Could not change display mode: {e}")
 
     def display_next_mode(self):
         """Display next year progress mode."""
@@ -143,7 +143,7 @@ class Yearglass:
             self.led.off()
         except Exception as e:
             self.led.blink_on(2)
-            print(f"[display_next_mode] Could not display next mode: {e}")
+            usbprint(f"[display_next_mode] Could not display next mode: {e}")
 
     def display_previous_mode(self):
         """Display previous year progress mode."""
@@ -159,7 +159,7 @@ class Yearglass:
             self.led.off()
         except Exception as e:
             self.led.blink_on(2)
-            print(f"[display_next_mode] Could not display previous mode: {e}")
+            usbprint(f"[display_next_mode] Could not display previous mode: {e}")
 
     def display_random_mode(self):
         """Display random year progress mode."""
@@ -181,7 +181,7 @@ class Yearglass:
             self.led.off()
         except Exception as e:
             self.led.blink_on(2)
-            print(f"[display_random_mode] Could not display random mode: {e}")
+            usbprint(f"[display_random_mode] Could not display random mode: {e}")
 
     def display_refresh_current_mode(self):
         """Refresh current year progress mode. It is needed to display updated data."""
@@ -191,14 +191,16 @@ class Yearglass:
                 mode = self.current_display_mode
             else:
                 mode = self.display_modes[0]
-                print(
+                usbprint(
                     "[display_refresh_curent_mode] No last mode set, displaying the first one"
                 )
             self.display_mode(mode)
             self.led.off()
         except Exception as e:
             self.led.blink_on(2)
-            print(f"[display_refresh_current_mode] Could not refresh current mode {e}")
+            usbprint(
+                f"[display_refresh_current_mode] Could not refresh current mode {e}"
+            )
 
     def update_data(self):
         """Fetch time to update elapsed days and totay days this year."""
@@ -208,9 +210,9 @@ class Yearglass:
                 t: tuple | None = self.time_handler.get_time()
                 if t is not None:
                     timestamp: str = self.time_visualizer.render_time_str(t)
-                    print(f"[update_data] Updated data at: {timestamp}")
+                    usbprint(f"[update_data] Updated data at: {timestamp}")
                 else:
-                    print("[update_data] Unable to fetch time.")
+                    usbprint("[update_data] Unable to fetch time.")
 
             self.led.blink_off()
             self.led.on()
@@ -221,7 +223,7 @@ class Yearglass:
             self.led.off()
         except Exception as e:
             self.led.blink_on(1)
-            print(f"[update_data] Failed to update data: {e}")
+            usbprint(f"[update_data] Failed to update data: {e}")
 
 
 def main():
@@ -230,13 +232,14 @@ def main():
         while True:
             yearglass.update_data()
             yearglass.display_refresh_current_mode()
-            utime.sleep(yearglass.time_handler.get_seconds_till_midnight())
+            yearglass.time_handler.lightsleep_till_midnight(led=yearglass.led)
+
     except Exception as e:
         try:
             yearglass.led.blink_on(0.5)
         except Exception:
             pass
-        print(f"[main] Error: {e}")
+        usbprint(f"[main] Error: {e}")
 
 
 if __name__ == "__main__":

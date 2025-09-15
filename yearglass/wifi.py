@@ -2,6 +2,8 @@ import time
 
 import network  # type: ignore
 
+from .usbprint import usbprint
+
 
 class Station:
     def __init__(self, ssid: str, password: str) -> None:
@@ -26,30 +28,30 @@ class Station:
                 self.sta = network.WLAN(network.STA_IF)
                 self.sta.active(True)  # type: ignore
             if self.sta.isconnected():  # type: ignore
-                print("[connect] Already connected to WiFi.")
+                usbprint("[connect] Already connected to WiFi.")
                 return True
             else:
                 if retries is not None:
-                    print(
+                    usbprint(
                         f"[connect] Connecting to WiFi... (attempt {attempt}/{retries})"
                     )
                 else:
-                    print(f"[connect] Connecting to WiFi... (attempt {attempt})")
+                    usbprint(f"[connect] Connecting to WiFi... (attempt {attempt})")
                 self.sta.disconnect()  # type: ignore
                 self.sta.connect(self.ssid, self.password)  # type: ignore
             start: float = time.time()
             while not self.sta.isconnected():  # type: ignore
                 if time.time() - start > timeout:
-                    print("[connect] Connection timed out")
+                    usbprint("[connect] Connection timed out")
                     break
                 time.sleep(0.5)
             if self.sta.isconnected():  # type: ignore
-                print("[connect] Connected, IP address:", self.sta.ifconfig()[0])  # type: ignore
+                usbprint("[connect] Connected, IP address:", self.sta.ifconfig()[0])  # type: ignore
                 return True
-            print(f"[connect] Retrying in {delay} seconds...")
+            usbprint(f"[connect] Retrying in {delay} seconds...")
             time.sleep(delay)
             if retries is not None and attempt >= retries:
-                print("[connect] WiFi connection failed after retries.")
+                usbprint("[connect] WiFi connection failed after retries.")
                 return False
 
     def disconnect(self) -> None:
@@ -57,20 +59,20 @@ class Station:
         Disconnect from WiFi but keep the WiFi module active.
         """
         if self.sta is not None:
-            print("[disconnect] Disconnecting from WiFi...")
+            usbprint("[disconnect] Disconnecting from WiFi...")
             self.sta.disconnect()
         else:
-            print("[disconnect] WiFi module not initialized.")
+            usbprint("[disconnect] WiFi module not initialized.")
 
     def sleep(self) -> None:
         """
         Put the WiFi module into low power mode (turn off radio).
         """
         if self.sta is not None:
-            print("[sleep] Disabling WiFi module...")
+            usbprint("[sleep] Disabling WiFi module...")
             self.sta.active(False)
         else:
-            print("[sleep] WiFi module not initialized.")
+            usbprint("[sleep] WiFi module not initialized.")
 
 
 class AccessPoint:
@@ -85,20 +87,20 @@ class AccessPoint:
             if self.ap is not None:
                 self.ap.config(essid=self.essid, password=self.password)
                 self.ap.active(True)
-                print(
+                usbprint(
                     "[start] Yearglass IP address in access point:",
                     self.ap.ifconfig()[0],
                 )
         except Exception as e:
-            print(f"[start] Unable to start access point: {e}")
+            usbprint(f"[start] Unable to start access point: {e}")
 
     def stop(self) -> None:
         if self.ap is not None:
             try:
                 self.ap.active(False)
-                print("[stop] Stopped Access Point...")
+                usbprint("[stop] Stopped Access Point...")
             except Exception as e:
-                print(f"[stop] Unable to stop Access Point: {e}")
+                usbprint(f"[stop] Unable to stop Access Point: {e}")
 
     def render_configuration(self) -> str:
         """Render multiline configuration string to display on epaper."""
@@ -136,15 +138,15 @@ class AccessPoint:
      ............
     ..............
 """
-            print(config)
+            usbprint(config)
             return config
         except Exception as e:
-            print(
+            usbprint(
                 f"[render_configuration] Unable to render dynamic configuration screen: {e}"
             )
             config: str = """
 Configuration
 See Yearglass README.
 """
-            print(config)
+            usbprint(config)
             return config

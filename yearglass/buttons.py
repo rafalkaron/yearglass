@@ -1,6 +1,8 @@
 import utime  # type: ignore
 from machine import Pin  # type: ignore
 
+from .usbprint import usbprint
+
 
 class Buttons:
     def __init__(
@@ -45,19 +47,19 @@ class Buttons:
     def _handle_key1(self, pin):
         utime.sleep_ms(20)  # debounce
         if pin.value() == 0:
-            print("[handle_buttons] KEY1 pressed (IRQ)")
+            usbprint("[handle_buttons] KEY1 pressed (IRQ)")
             self._handle_press(pin, self.on_key1, self.on_key1_long, "KEY1")
 
     def _handle_key2(self, pin):
         utime.sleep_ms(20)
         if pin.value() == 0:
-            print("[handle_buttons] KEY2 pressed (IRQ)")
+            usbprint("[handle_buttons] KEY2 pressed (IRQ)")
             self._handle_press(pin, self.on_key2, self.on_key2_long, "KEY2")
 
     def _handle_key3(self, pin):
         utime.sleep_ms(20)
         if pin.value() == 0:
-            print("[handle_buttons] KEY3 pressed (IRQ)")
+            usbprint("[handle_buttons] KEY3 pressed (IRQ)")
             self._handle_press(pin, self.on_key3, self.on_key3_long, "KEY3")
 
     def _handle_press(self, pin: Pin, short_cb, long_cb, key_name: str) -> None:
@@ -67,8 +69,10 @@ class Buttons:
         release_time = utime.ticks_ms()
         duration = utime.ticks_diff(release_time, press_time)
         if duration >= self.long_press_ms and long_cb:
-            print(f"[handle_buttons] {key_name} long-press detected ({duration} ms)")
+            usbprint(f"[handle_buttons] {key_name} long-press detected ({duration} ms)")
             long_cb()
         else:
-            print(f"[handle_buttons] {key_name} short-press detected ({duration} ms)")
+            usbprint(
+                f"[handle_buttons] {key_name} short-press detected ({duration} ms)"
+            )
             short_cb()
