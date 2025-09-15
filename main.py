@@ -230,6 +230,7 @@ class Yearglass:
         """
         Sleep in light sleep mode in chunks until midnight.
         Sleeps for up to 1 hour at a time, looping until midnight. Skips sleep if no time remains.
+        Handles the case where time rolls over past midnight and s_left increases unexpectedly.
         """
         self.led.on()
         max_lightsleep_ms: int = 3600000  # 1 hour
@@ -245,7 +246,13 @@ class Yearglass:
             )
             self.led.off()
             machine.lightsleep(ms_sleep)
-            s_left = self.time_handler.get_seconds_till_midnight()
+            new_s_left: int = self.time_handler.get_seconds_till_midnight()
+            if new_s_left > s_left:
+                usbprint(
+                    f"[safesleep] Detected time rollover or drift: seconds till midnight increased from {s_left} to {new_s_left}. Exiting sleep loop."
+                )
+                break
+            s_left = new_s_left
             if s_left <= 0:
                 usbprint("[safesleep] No time left until midnight, skipping sleep.")
                 break
