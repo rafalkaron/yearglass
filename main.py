@@ -229,29 +229,29 @@ class Yearglass:
     def safesleep(self) -> None:
         """
         Sleep in light sleep mode in chunks until midnight.
-        Sleeps for up to 1 hour at a time, recursively calling itself after waking up
-        if there is still time left until midnight. Skips sleep if no time remains.
+        Sleeps for up to 1 hour at a time, looping until midnight. Skips sleep if no time remains.
         """
         self.led.on()
-        s_till_midnight: int = self.time_handler.get_seconds_till_midnight()
-        ms_till_midnight: int = int(s_till_midnight * 1000)
         max_lightsleep_ms: int = 3600000  # 1 hour
-        if ms_till_midnight <= 0:
+        s_left: int = self.time_handler.get_seconds_till_midnight()
+        if s_left <= 0:
             usbprint("[safesleep] No time left until midnight, skipping sleep.")
             return
-        ms_sleep: int = min(ms_till_midnight, max_lightsleep_ms)
-        usbprint(
-            f"[safesleep] Entering lightsleep for {ms_sleep // 1000} s (till midnight: {s_till_midnight} s)"
-        )
-        self.led.off()
-        machine.lightsleep(ms_sleep)
-        # After waking up, check if there is still time left and sleep again if needed
-        s_left: int = self.time_handler.get_seconds_till_midnight()
-        usbprint(
-            f"[safesleep] There is still {s_left} s till midnight. Entering lightsleep again."
-        )
-        if s_left > 0:
-            self.safesleep()
+        while s_left > 0:
+            ms_left: int = int(s_left * 1000)
+            ms_sleep: int = min(ms_left, max_lightsleep_ms)
+            usbprint(
+                f"[safesleep] Entering lightsleep for {ms_sleep // 1000} s (till midnight: {s_left} s)"
+            )
+            self.led.off()
+            machine.lightsleep(ms_sleep)
+            s_left = self.time_handler.get_seconds_till_midnight()
+            if s_left <= 0:
+                usbprint("[safesleep] No time left until midnight, skipping sleep.")
+                break
+            usbprint(
+                f"[safesleep] There is still {s_left} s till midnight. Entering lightsleep again."
+            )
 
 
 def main():
