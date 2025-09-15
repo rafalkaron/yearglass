@@ -39,12 +39,15 @@ class TimeHandler:
         usbprint(f"[get_year_progress] Year progress: {days_elapsed}/{total_days} days")
         return (days_elapsed, total_days)
 
-    def lightsleep_till_midnight(self) -> None:
+    def lightsleep_till_midnight(self, led=None) -> None:
         """
         Sleep in light sleep mode in chunks until midnight.
         Sleeps for up to 1 hour at a time, looping until midnight. Skips sleep if no time remains.
         Handles the case where time rolls over past midnight and s_left increases unexpectedly.
         """
+        if led:
+            led.on()
+        time.sleep(1)
         max_lightsleep_ms: int = 3600000  # 1 hour
         s_left: int = self.get_seconds_till_midnight()
         if s_left <= 0:
@@ -56,6 +59,8 @@ class TimeHandler:
             usbprint(
                 f"[safesleep] Entering lightsleep for {ms_sleep // 1000} s (till midnight: {s_left} s)"
             )
+            if led:
+                led.off()
             time.sleep(0.25)  # Add buffer before going to ligtsleep
             machine.lightsleep(ms_sleep)
             new_s_left: int = self.get_seconds_till_midnight()
