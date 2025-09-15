@@ -225,6 +225,21 @@ class Yearglass:
             self.led.blink_on(1)
             usbprint(f"[update_data] Failed to update data: {e}")
 
+    def safesleep(self) -> None:
+        try:
+            self.led.on()
+            self.buttons.disable_interrupts()
+            utime.sleep(1)
+            self.time_handler.lightsleep_till_midnight()
+            self.buttons.enable_interrupts()
+            self.led.off()
+        except Exception as e:
+            self.led.blink_on(1)
+            usbprint(
+                f"[safesleep] Problem with lightsleep: {e}. Using regular sleep for one hour."
+            )
+            utime.sleep(3600)
+
 
 def main():
     try:
@@ -232,7 +247,7 @@ def main():
         while True:
             yearglass.update_data()
             yearglass.display_refresh_current_mode()
-            yearglass.time_handler.lightsleep_till_midnight(led=yearglass.led)
+            yearglass.safesleep()
 
     except Exception as e:
         try:
