@@ -59,9 +59,9 @@ class TimeHandler:
             usbprint(
                 f"[safesleep] Entering lightsleep for {ms_sleep // 1000} s (till midnight: {s_left} s)"
             )
-            time.sleep(0.25)  # Add buffer before going to ligtsleep
             if led:
                 led.off()
+            time.sleep(0.25)  # Add buffer before going to ligtsleep
             machine.lightsleep(ms_sleep)
             new_s_left: int = self.get_seconds_till_midnight()
             if new_s_left > s_left:
