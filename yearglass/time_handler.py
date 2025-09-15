@@ -39,6 +39,44 @@ class TimeHandler:
         usbprint(f"[get_year_progress] Year progress: {days_elapsed}/{total_days} days")
         return (days_elapsed, total_days)
 
+    def lightsleep_till_midnight(self, led=None) -> None:
+        """
+        Sleep in light sleep mode in chunks until midnight.
+        Sleeps for up to 1 hour at a time, looping until midnight. Skips sleep if no time remains.
+        Handles the case where time rolls over past midnight and s_left increases unexpectedly.
+        """
+        if led:
+            led.on()
+
+        max_lightsleep_ms: int = 3600000  # 1 hour
+        s_left: int = self.get_seconds_till_midnight()
+        if s_left <= 0:
+            usbprint("[safesleep] No time left until midnight, skipping sleep.")
+            return
+        while s_left > 0:
+            ms_left: int = int(s_left * 1000)
+            ms_sleep: int = min(ms_left, max_lightsleep_ms)
+            usbprint(
+                f"[safesleep] Entering lightsleep for {ms_sleep // 1000} s (till midnight: {s_left} s)"
+            )
+            time.sleep(0.25)  # Add buffer before going to ligtsleep
+            if led:
+                led.off()
+            machine.lightsleep(ms_sleep)
+            new_s_left: int = self.get_seconds_till_midnight()
+            if new_s_left > s_left:
+                usbprint(
+                    f"[safesleep] Detected time rollover or drift: seconds till midnight increased from {s_left} to {new_s_left}. Exiting sleep loop."
+                )
+                break
+            s_left = new_s_left
+            if s_left <= 0:
+                usbprint("[safesleep] No time left until midnight, skipping sleep.")
+                break
+            usbprint(
+                f"[safesleep] There is still {s_left} s till midnight. Entering lightsleep again."
+            )
+
     def get_seconds_till_midnight(self) -> int:
         """
         Calculate the number of seconds remaining until midnight (local time),

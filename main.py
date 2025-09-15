@@ -1,4 +1,3 @@
-import machine  # type: ignore
 import urandom  # type: ignore
 import utime  # type: ignore
 
@@ -226,41 +225,6 @@ class Yearglass:
             self.led.blink_on(1)
             usbprint(f"[update_data] Failed to update data: {e}")
 
-    def safesleep(self) -> None:
-        """
-        Sleep in light sleep mode in chunks until midnight.
-        Sleeps for up to 1 hour at a time, looping until midnight. Skips sleep if no time remains.
-        Handles the case where time rolls over past midnight and s_left increases unexpectedly.
-        """
-        self.led.on()
-        max_lightsleep_ms: int = 3600000  # 1 hour
-        s_left: int = self.time_handler.get_seconds_till_midnight()
-        if s_left <= 0:
-            usbprint("[safesleep] No time left until midnight, skipping sleep.")
-            return
-        while s_left > 0:
-            ms_left: int = int(s_left * 1000)
-            ms_sleep: int = min(ms_left, max_lightsleep_ms)
-            usbprint(
-                f"[safesleep] Entering lightsleep for {ms_sleep // 1000} s (till midnight: {s_left} s)"
-            )
-            self.led.off()
-            utime.sleep(0.25)  # Add buffer before going to ligtsleep
-            machine.lightsleep(ms_sleep)
-            new_s_left: int = self.time_handler.get_seconds_till_midnight()
-            if new_s_left > s_left:
-                usbprint(
-                    f"[safesleep] Detected time rollover or drift: seconds till midnight increased from {s_left} to {new_s_left}. Exiting sleep loop."
-                )
-                break
-            s_left = new_s_left
-            if s_left <= 0:
-                usbprint("[safesleep] No time left until midnight, skipping sleep.")
-                break
-            usbprint(
-                f"[safesleep] There is still {s_left} s till midnight. Entering lightsleep again."
-            )
-
 
 def main():
     try:
@@ -268,7 +232,7 @@ def main():
         while True:
             yearglass.update_data()
             yearglass.display_refresh_current_mode()
-            yearglass.safesleep()
+            yearglass.time_handler.lightsleep_till_midnight(led=yearglass.led)
 
     except Exception as e:
         try:
