@@ -1,5 +1,7 @@
 from libs.Pico_ePaper_2_7 import EPD_2in7 as EPD
 
+from .usbprint import usbprint
+
 
 class EPaper:
     """Wrapper for the official Waveshare Pico_ePaper_2_7 driver.
@@ -30,7 +32,7 @@ class EPaper:
         if not (0 <= row < self.max_rows):
             raise ValueError(f"Row {row} is out of range (0-{self.max_rows - 1}).")
         if len(text) > self.max_columns:
-            print(
+            usbprint(
                 f"Warning: text exceeds {self.max_columns} characters and will be truncated."
             )
             text = text[: self.max_columns]
@@ -45,13 +47,13 @@ class EPaper:
         """
         rows = text.splitlines()
         if len(rows) > self.max_rows:
-            print(
+            usbprint(
                 f"Warning: text has {len(rows)} rows, but only {self.max_rows} can be displayed. Extra rows will be ignored."
             )
             rows = rows[: self.max_rows]
         for i, row in enumerate(rows):
             if len(row) > self.max_columns:
-                print(
+                usbprint(
                     f"Warning: row {i} exceeds {self.max_columns} characters and will be truncated."
                 )
                 rows[i] = row[: self.max_columns]
@@ -93,7 +95,7 @@ class EPaper:
         if current_line:
             lines.append(current_line)
         if len(lines) > self.max_rows:
-            print(
+            usbprint(
                 f"Warning: sentence wrapped to {len(lines)} lines, but only {self.max_rows} can be displayed. Extra lines will be ignored."
             )
             lines = lines[: self.max_rows]

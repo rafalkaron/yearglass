@@ -27,9 +27,10 @@
 # THE SOFTWARE.
 #
 
-from machine import Pin, SPI
-import framebuf
-import utime
+import framebuf  #type: ignore
+import utime  #type: ignore
+from machine import SPI, Pin  #type: ignore
+from yearglass.usbprint import usbprint
 
 # Display resolution
 EPD_WIDTH       = 176
@@ -220,13 +221,13 @@ class EPD_2in7:
         self.digital_write(self.cs_pin, 1)
         
     def ReadBusy(self):
-        print("e-Paper busy")
+        usbprint("e-Paper busy")
         tries = 0
         while self.digital_read(self.busy_pin) == 0 and tries < 3:  # 0: idle, 1: busy
             self.send_command(0x71)
             tries += 1
         self.delay_ms(200)
-        print("e-Paper busy release")
+        usbprint("e-Paper busy release")
         
     def SetLut(self):
         self.send_command(0x20)
@@ -601,5 +602,5 @@ if __name__=='__main__':
     epd.delay_ms(500)
     
     epd.EPD_2IN7_Clear()
-    print("Sleep")
+    usbprint("Sleep")
     epd.Sleep()

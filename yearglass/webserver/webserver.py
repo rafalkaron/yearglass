@@ -3,6 +3,8 @@ import socket
 
 import utime as time  # type: ignore
 
+from ..usbprint import usbprint
+
 
 class Webserver:
     def __init__(self, host: str = "0.0.0.0", port: int = 80):
@@ -20,7 +22,7 @@ class Webserver:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind((self.host, self.port))
         s.listen(1)
-        print(f"Webserver running on http://{self.host}:{self.port}")
+        usbprint(f"Webserver running on http://{self.host}:{self.port}")
         try:
             while True:
                 try:
@@ -29,9 +31,9 @@ class Webserver:
                     if should_stop:
                         break
                 except Exception as e:
-                    print(f"Webserver accept error: {e}")
+                    usbprint(f"Webserver accept error: {e}")
         except Exception as e:
-            print(f"Webserver error: {e}")
+            usbprint(f"Webserver error: {e}")
         finally:
             s.close()
 
@@ -117,7 +119,9 @@ class Webserver:
             if fields.get("wifi-password")
             else ""
         )
-        print(f"Received config: ssid={fields.get('ssid', '')}, wifi-password={pw_log}")
+        usbprint(
+            f"Received config: ssid={fields.get('ssid', '')}, wifi-password={pw_log}"
+        )
         html = self._read_html(self.html_applied)
         self._send_response(conn, "200 OK", "text/html", html)
         # Give the client time to receive the response before closing
@@ -215,10 +219,10 @@ class Webserver:
                 os.stat(self.config)
                 with open(self.config, "w") as f:
                     f.write(config_content)
-                    print("[_update_data] Updated config file.")
+                    usbprint("[_update_data] Updated config file.")
             except OSError:
                 with open(self.config, "w") as f:
                     f.write(config_content)
-                    print("[_update_data] Created new config file.")
+                    usbprint("[_update_data] Created new config file.")
         except Exception as e:
-            print(f"Failed to save config: {e}")
+            usbprint(f"Failed to save config: {e}")

@@ -1,5 +1,7 @@
 import math
 
+from .usbprint import usbprint
+
 
 class TimeVisualizer:
     def __init__(self, max_cols: int = 22, max_rows: int = 33):
@@ -111,7 +113,7 @@ class TimeVisualizer:
         grid = [center_row(r) for r in grid]
 
         hourglass: str = "\n".join(grid)
-        print(f"[render_yearglass]\n{hourglass}")
+        usbprint(f"[render_yearglass]\n{hourglass}")
         return hourglass
 
     def render_level(
@@ -139,7 +141,7 @@ class TimeVisualizer:
                 return 0
             proportion = days_elapsed / days_total
             rows_to_fill = int(proportion * self.max_rows)
-            print(f"[calculate_rows_to_fill] Rows to fill: {rows_to_fill}")
+            usbprint(f"[calculate_rows_to_fill] Rows to fill: {rows_to_fill}")
             return rows_to_fill
 
         # Calculate bar dimensions
@@ -161,7 +163,7 @@ class TimeVisualizer:
 
         # Return the bar
         bar_str = "\n".join(rows)
-        print(f"[render_level]\n{bar_str}")
+        usbprint(f"[render_level]\n{bar_str}")
         return bar_str
 
     def render_piechart(
@@ -205,7 +207,7 @@ class TimeVisualizer:
                     row += symbol_remaining
             grid.append(row)
         piechart = "\n".join(grid)
-        print(f"[render_piechart]\n{piechart}")
+        usbprint(f"[render_piechart]\n{piechart}")
         return piechart
 
     def render_spiral(
@@ -271,7 +273,7 @@ class TimeVisualizer:
                         break
                 left += 1
         spiral_str = "\n".join(["".join(row) for row in grid])
-        print(f"[render_spiral_progress]\n{spiral_str}")
+        usbprint(f"[render_spiral_progress]\n{spiral_str}")
         return spiral_str
 
     def render_crossout(
@@ -318,7 +320,7 @@ class TimeVisualizer:
         else:
             rows = content_rows
         grid_str = "\n".join(rows)
-        print(f"[render_grid]\n{grid_str}")
+        usbprint(f"[render_grid]\n{grid_str}")
         return grid_str
 
     def render_time_str(self, time_tuple: tuple) -> str:
@@ -326,5 +328,5 @@ class TimeVisualizer:
         Render a time tuple (year, month, day, hour, minute, second) as a formatted string.
         """
         t: str = f"{time_tuple[0]:04d}-{time_tuple[1]:02d}-{time_tuple[2]:02d} {time_tuple[3]:02d}:{time_tuple[4]:02d}:{time_tuple[5]:02d}"
-        print(f"[render_time_str] Rendered time string: {t}")
+        usbprint(f"[render_time_str] Rendered time string: {t}")
         return t
