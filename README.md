@@ -2,6 +2,9 @@
 
 Display year progress in unusual ways on an epaper display.
 
+![yearglass_1](https://github.com/user-attachments/assets/1da520bd-2b49-44b7-988e-6d57a8720283)
+
+
 ## Using Yearglass
 
 Turn Yearglass on and switch between different modes of year progress visualization.
